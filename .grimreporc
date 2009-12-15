@@ -1,0 +1,22 @@
+#grimrepo configfile
+
+
+
+##### LOCAL SETTING ######
+#server which will contain repository
+export GR_SERVER=kasper@localhost;
+#protocol
+
+#rootdirectory for server -- must have trailing slash
+export GR_SERVERROOT=/home/kasper/grimrepo/serverroot/
+
+#local rootdirectory -- must have trailing slash
+export GR_LOCALROOT=/home/kasper/grimrepo/localroot/
+
+#ignore dirs
+
+##### GLOBAL SETTINGS ######
+#metadata
+export GR_INDEX=/home/kasper/.grimrepo
+#timings
+#rsync options
