@@ -8,15 +8,15 @@ export GR_SERVER=kasper@localhost;
 #protocol
 
 #rootdirectory for server -- must have trailing slash
-export GR_SERVERROOT=/home/kasper/grimrepo/serverroot/
+export GR_SERVERROOT=/media/documents/synced/projects/grimrepo/serverroot/
 
 #local rootdirectory -- must have trailing slash
-export GR_LOCALROOT=/home/kasper/grimrepo/localroot/
+export GR_LOCALROOT=/media/documents/synced/projects/grimrepo/localroot/
 
 #ignore dirs
 
 ##### GLOBAL SETTINGS ######
 #metadata
-export GR_INDEX=/home/kasper/.grimrepo
+export GR_INDEX=/media/documents/synced/projects/.grimrepo
 #timings
 #rsync options

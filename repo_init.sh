@@ -61,7 +61,7 @@ function selection {
 	if [ $choice == "1" ]; then 
 		echo "Copying $next_entry from $from to $to";
 		#remove the serverroot part:
-		rsync -vrlpts $rsyncCopy;
+		eval rsync -vrlpts $rsyncCopy;
 		#echo "rsync -vrlpt $rsyncCopy";
 	fi
 	#if user chooses 2, copy everything from client with --delete and -r
@@ -95,7 +95,7 @@ while [ `echo $c_to_s | wc -w` != 0 ]; do
 		#check if file exists both locally and on server
 		#this is the case if $next_entry is in $s_to_c
 		if echo "$s_to_c" | grep -q $next_entry; then
-			echo "CONFLICT: $next_entry $s_to_c";
+			#echo "CONFLICT: $next_entry $s_to_c";
 			#remove inconsistencies fom $next_entry (via ??)
 			solve_conflict "$next_entry";
 			#remove $next_entry from opposite list (that is s_to_c)
