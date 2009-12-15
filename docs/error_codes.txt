@@ -1,0 +1,10 @@
+#List of error codes:
+
+1 - 
+
+
+
+
+
+
+75 - User choose cancel/quit after attempting to resolve conflict in textfile
