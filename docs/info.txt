@@ -1,0 +1,44 @@
+===============================
+Grimrepo help file
+===============================
+
+
+Syntax: 
+---------------------------
+
+grimrepo [add <localroot> <serverinfo> <serverroot>] [sync <localroot>] [sync <serverinfo>] [sync <serverroot>]
+
+
+
+Parameters and explanation:
+----------------------------
+
+add <localroot> <serverinfo> <serverroot>
+
+Adds a new repository configuration to the .grimreporc file.
+Then syncs <localroot> with <serverroot> on <serverinfo> with all conflicts
+
+<localroot>: Local root for repository
+<serverinfo>: Info used to connect to server in the form "user@serverip" (without quotes)
+<serverroot>: Server root for repositoty
+
+----
+sync <localroot>
+
+syncs the repository having <localroot> as local root
+
+<localroot>: Local root for repository
+
+----
+sync <serverroot>
+
+syncs the repository having <serverroot> as server root
+
+<serverinfo>: Info used to connecto to server in the form "user@serverip" (without quotes)
+
+----
+sync <serverinfo>
+
+syncs the repository havin <serverinfo> as server
+
+<serverinfo>: Info used to connect to server

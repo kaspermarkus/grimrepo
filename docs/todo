@@ -1,0 +1,7 @@
+- add: tjeck add syntaks (localroot eksister), serveren eksisterer - ellers fejl
+- add: lav functionalitet til at skrive til konfigurationsfil ved add
+- add: ved foerste sync.. overvej noget paenere end at diffe over ssh
+- sync: implementer sync
+- add: lav noget fejlsikkerhed eller sikkerhedsspoergsmaal ved drastiske beslutninger 
+- Generelt: giv mulighed for at se filer (med less el. lign.) inden man tager et valg om slet eller kopier
+- init: lav mulithed for at synkronisere hele direktorater af gangen
