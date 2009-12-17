@@ -1,7 +1,5 @@
 #grimrepo configfile
 
-
-
 ##### LOCAL SETTING ######
 #server which will contain repository
 export GR_SERVER=`whoami`@localhost;
@@ -21,5 +19,8 @@ export GR_LOCALROOT=`pwd`/localroot/
 #metadata
 export GR_INDEX=`pwd`/.grimrepo
 #export GR_INDEX=/media/documents/synced/projects/.grimrepo
-#timings
+
+#timespan for each log (seconds)
+export GR_LOG_TIME=10
+
 #rsync options
