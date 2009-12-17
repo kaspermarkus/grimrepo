@@ -4,19 +4,22 @@
 
 ##### LOCAL SETTING ######
 #server which will contain repository
-export GR_SERVER=kasper@localhost;
+export GR_SERVER=`whoami`@localhost;
 #protocol
 
 #rootdirectory for server -- must have trailing slash
-export GR_SERVERROOT=/media/documents/synced/projects/grimrepo/serverroot/
+export GR_SERVERROOT=`pwd`/serverroot/
+#export GR_SERVERROOT=/media/documents/synced/projects/grimrepo/serverroot/
 
 #local rootdirectory -- must have trailing slash
-export GR_LOCALROOT=/media/documents/synced/projects/grimrepo/localroot/
+export GR_LOCALROOT=`pwd`/localroot/
+#export GR_LOCALROOT=/media/documents/synced/projects/grimrepo/localroot/
 
 #ignore dirs
 
 ##### GLOBAL SETTINGS ######
 #metadata
-export GR_INDEX=/media/documents/synced/projects/.grimrepo
+export GR_INDEX=`pwd`/.grimrepo
+#export GR_INDEX=/media/documents/synced/projects/.grimrepo
 #timings
 #rsync options
