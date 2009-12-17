@@ -6,8 +6,5 @@
 
 
 
-53 - Error when syncing file or dir between user and server
-
-63 - Error occured when attempting to delete file remotely or locally
 
 75 - User choose cancel/quit after attempting to resolve conflict in textfile
