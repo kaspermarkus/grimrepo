@@ -11,7 +11,6 @@
 #
 ####################################################
 
-source ~/.grimreporc
 source general_functions.sh
 
 ####
