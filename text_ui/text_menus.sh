@@ -133,7 +133,7 @@ function dir_exists_only_once_menu {
 	noexist=$3;
 
 	#print menu header:
-	menu_header "Directory \033[1m$file\033[0m only exists on $placement";
+	menu_header "Directory \033[1m$dir\033[0m only exists on $placement";
 	#print options:
 	printf "1) Copy from $placement to $noexists\n";
 	printf "2) Delete from $placement\n";

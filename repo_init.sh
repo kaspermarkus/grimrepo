@@ -14,13 +14,12 @@
 ####################################################
 
 source ~/.grimreporc
-source dialogs.sh
+#use pure text menus
+source text_ui/text_menus.sh
+source file_info.sh
+source sync_functions.sh
 
-#save localroot and serverroot short path (rootdir/ instead of /home/user/rootdir/)
-server_root=`echo $GR_SERVERROOT | sed 's#^.*/\(.\)#\1#'i`
-local_root=`echo $GR_LOCALROOT | sed 's#^.*/\(.\)#\1#'i`
-
-#run list rsync changes from server to client
+#run list rsync changes from server to local
 #using head and tail to avoid the garbage info from rsync
 s_to_c=`rsync -vrc -n $GR_SERVER:$GR_SERVERROOT $GR_LOCALROOT | tail --lines=+2 | head --lines=-3`
 c_to_s=`rsync -vrc -n $GR_LOCALROOT $GR_SERVER:$GR_SERVERROOT | tail --lines=+2 | head --lines=-3`
@@ -29,8 +28,8 @@ c_to_s=`rsync -vrc -n $GR_LOCALROOT $GR_SERVER:$GR_SERVERROOT | tail --lines=+2 
 #Takes care of functionality when a file or dir exists on server but not locally
 #$1: "directory" or "file"
 #$2: $next_entry -- the file/dir in question
-#$3: "c_to_s" or "s_to_c", depending on whether we we are copying from server to client,
-#       or client to server, respectively.
+#$3: "c_to_s" or "s_to_c", depending on whether we we are copying from server to local,
+#       or local to server, respectively.
 function selection {
 	tree *root;
 	
@@ -64,7 +63,7 @@ function selection {
 		eval rsync -vrlpts $rsyncCopy;
 		#echo "rsync -vrlpt $rsyncCopy";
 	fi
-	#if user chooses 2, copy everything from client with --delete and -r
+	#if user chooses 2, copy everything from local with --delete and -r
 	if [ $choice == "2" ]; then 
 		echo "Deleting $next_entry from $from.";
 		if [[ $3 =~ "s_to_c" ]]; then 
@@ -79,61 +78,255 @@ function selection {
 	c_to_s=`echo "$c_to_s" | grep -P -v "^$next_entry"`;
 }
 
-#First consider the files that are conflicting from server to local (c_to_s):
-while [ `echo $c_to_s | wc -w` != 0 ]; do 
-	#take first line from c_to_s and save it in $next_entry:
-	next_entry=`echo "$c_to_s" | head -n 1`
+####
+# Implements the action used if a file only exists
+# on server and not locally. This is done by presenting
+# user with a menu, and handling his choice.
+#
+# $1 - file: the conflicting file
+# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
+# $3 - localroot: the root of the client (eg. /root/to/local/repo/)
+function file_exists_server {
+	file=$1;
+	serverroot=$2;
+	localroot=$3;
+	echo localroot $localroot;
+	#present conflict to user (choice saved in $?)
+	file_exists_server_menu "$file"
+	choice=$?;
+	#if user chooses "cancel", we quit
+	if [ $choice -eq "0" ]; then
+		exit 73;
+	fi;
+
+	#if user chooses to copy:
+	if [ $choice -eq "1" ]; then
+		copy_data "$file" "$serverroot" "$localroot";
+	else 
+		if [ $choice -eq "3" ]; then
+			#if user wants to view file info:
+			
+			echo print_remote_file_info "$serverroot" "$file";
+			print_remote_file_info "$serverroot" "$file";
+			#after showing info, go back to menu
+			file_exists_server "$file" "$serverroot" "$localroot";
+			return $?;
+		else 
+			#user chooses to delete -- confirm first:
+			confirm_menu "Do you really want to delete file: \033[1m$file\033[0m from server";
+			confirmed=$?;
+			#if user regrets, give him new prompt on what to do
+			if [ $confirmed -eq "0" ]; then
+				file_exists_server "$file" "$serverroot" "$localroot";
+				return $?;
+			else
+				delete_data "$file" "$serverroot"
+			fi; #end if user prompted on certain to delete
+		fi; #end if view/delete file
+	fi; #end if user chooses copy or delete
+}
+
+####
+# Implements the action used if a directory only exists
+# on server and not locally. This is done by presenting
+# user with a menu, and handling his choice.
+#
+# $1 - dir: the conflicting dir
+# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
+# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
+function dir_exists_server {
+	dir=$1;
+	serverroot=$2;
+	localroot=$3;
+
+	#present conflict to user (choice saved in $?)
+	dir_exists_server_menu "$dir"
+	choice=$?;
+	#if user chooses "cancel", we quit
+	if [ $choice -eq "0" ]; then
+		exit 74;
+	fi;
+
+	#if user chooses to copy:
+	if [ $choice -eq "1" ]; then
+		copy_data "$dir" "$serverroot" "$localroot"; 
+	else #user chooses to delete -- confirm first:
+		confirm_menu "Do you really want to delete directory: \033[1m$dir\033[0m from server";
+		confirmed=$?;
+		#if user regrets, give him new prompt on what to do
+		if [ $confirmed -eq "0" ]; then
+			dir_exists_server "$dir" "$serverroot" "$localroot";
+			return $?;
+		else
+			delete_data "$dir" "$serverroot";
+		fi; #end if user prompted on certain to delete
+	fi; #end if user chooses copy or delete
+	#if we made it this far, user has either copied or deleted
+	#since its a dir, and copying/deleting is recursive, we can remove
+}
+
+####
+# Implements the action used if a file only exists
+# on locally and not on server. This is done by presenting
+# user with a menu, and handling his choice.
+#
+# $1 - file: the conflicting file
+# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
+# $3 - localroot: the root of the client (eg. /root/to/local/repo/)
+function file_exists_local {
+	file=$1;
+	serverroot=$2;
+	localroot=$3;
+	echo localroot $localroot;
+	#present conflict to user (choice saved in $?)
+	file_exists_local_menu "$file"
+	choice=$?;
+	#if user chooses "cancel", we quit
+	if [ $choice -eq "0" ]; then
+		exit 73;
+	fi;
+
+	#if user chooses to copy:
+	if [ $choice -eq "1" ]; then
+		copy_data "$file" "$localroot" "$serverroot";
+	else 
+		if [ $choice -eq "3" ]; then
+			#if user wants to view file info:
+			
+			echo print_local_file_info "$localroot" "$file";
+			print_local_file_info "$localroot" "$file";
+			#after showing info, go back to menu
+			file_exists_local "$file" "$serverroot" "$localroot";
+			return $?;
+		else 
+			#user chooses to delete -- confirm first:
+			confirm_menu "Do you really want to delete file: \033[1m$file\033[0m from this computer";
+			confirmed=$?;
+			#if user regrets, give him new prompt on what to do
+			if [ $confirmed -eq "0" ]; then
+				file_exists_local "$file" "$serverroot" "$localroot";
+				return $?;
+			else
+				delete_data "$file" "$localroot"
+			fi; #end if user prompted on certain to delete
+		fi; #end if view/delete file
+	fi; #end if user chooses copy or delete
+}
+
+####
+# Implements the action used if a directory only exists
+# on local repository and not on server. This is done by presenting
+# user with a menu, and handling his choice.
+#
+# $1 - dir: the conflicting dir
+# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
+# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
+function dir_exists_local {
+	dir=$1;
+	serverroot=$2;
+	localroot=$3;
+
+	#present conflict to user (choice saved in $?)
+	dir_exists_local_menu "$dir"
+	choice=$?;
+	#if user chooses "cancel", we quit
+	if [ $choice -eq "0" ]; then
+		exit 74;
+	fi;
+
+	#if user chooses to copy:
+	if [ $choice -eq "1" ]; then
+		copy_data "$dir" "$localroot" "$serverroot"; 
+	else #user chooses to delete -- confirm first:
+		confirm_menu "Do you really want to delete directory: \033[1m$dir\033[0m from local repository";
+		confirmed=$?;
+		#if user regrets, give him new prompt on what to do
+		if [ $confirmed -eq "0" ]; then
+			dir_exists_local "$dir";
+			return $?;
+		else
+			delete_data "$dir" "$localroot";
+		fi; #end if user prompted on certain to delete
+	fi; #end if user chooses copy or delete
+	#if we made it this far, user has either copied or deleted
+	#since its a dir, and copying/deleting is recursive, we can remove
+}
+
+##############
+# First consider the files that are conflicting from server to local
+##############
+#save localroot and serverroot short path (rootdir/ instead of /home/user/rootdir/)
+#server_root=`echo $GR_SERVERROOT | sed 's#^.*/\(.\)#\1#'i`
+#local_root=`echo $GR_LOCALROOT | sed 's#^.*/\(.\)#\1#'i`
+#while we still have more conflicts to consider
+server_root=$GR_SERVER:$GR_SERVERROOT;
+local_root=$GR_LOCALROOT;
+alt_conflict_list=$c_to_s;
+conflict_list=$s_to_c;
+
+while [ `echo $conflict_list | wc -w` != 0 ]; do
+	tree *root;
+	echo "Conflict List: $conflict_list"; 
+	#take first line from list of conflicts:
+	conflict=`echo "$conflict_list" | head -n 1`
 	#then remove that line from c_to_s
-	c_to_s=`echo "$c_to_s" | tail --lines=+2`;
-    	#echo "next entry=$next_entry";
+	conflict_list=`echo "$conflict_list" | tail --lines=+2`;
+    	echo "next conflict=$conflict";
 
 	#if it is a directory (which can be identified by the trailing '/')
-	#the dir only exists on server, and not on locally
-	if echo $next_entry | grep -q -P '/$'; then
-		selection "directory" "$next_entry" "c_to_s";
+	#it means the dir only exists on server and not on locally
+	if echo $conflict | grep -q -P '/$'; then
+		dir_exists_server "$conflict" "$server_root" "$local_root";
+		#since user must either delete or copy (recursively) the
+		#we can delete all conflicting entries that are subfiles or
+		#subfolders
+		conflict_list=`echo "$conflict_list" | grep -P -v "^$conflict"`;
 	else
+		#it is a file.
 		#check if file exists both locally and on server
-		#this is the case if $next_entry is in $s_to_c
-		if echo "$s_to_c" | grep -q $next_entry; then
-			#echo "CONFLICT: $next_entry $s_to_c";
+		#this is the case if $conflict is in $alt_conflict_list
+		if echo "$alt_conflict_list" | grep -q $conflict; then
+			echo "CONFLICT: $conflict exists in both";
+			echo "TODO: fixme";
 			#remove inconsistencies fom $next_entry (via ??)
-			solve_conflict "$next_entry";
-			#remove $next_entry from opposite list (that is s_to_c)
-			s_to_c=`echo "$s_to_c" | grep -P -v "^$next_entry$"`;	
-			#echo "RESOLVED: $s_to_c";
+			#TODO solve_conflict "$next_entry";
+			#remove $next_entry from opposite list (that is alt_conflict_list)
+			alt_conflict_list=`echo "$alt_conflict_list" | grep -P -v "^$conflict$"`;	
+			#echo "RESOLVED: $alt_conflict_list";
 		else 
-			selection "file" "$next_entry" "c_to_s";
+			#file exists only on server
+			file_exists_server "$conflict" "$server_root" "$local_root";
 		fi;
 	fi;
 	
 done;
 
-echo "=====================================================================================";
+#echo "=====================================================================================";
 #then consider the files that are conflicting from local to server (s_to_c):
-while [ `echo $s_to_c | wc -w` != 0 ]; do 
-	#take first line from s_to_c and save it in $next_entry:
-	next_entry=`echo "$s_to_c" | head -n 1`
-	#then remove that line from s_to_c
-	s_to_c=`echo "$s_to_c" | tail --lines=+2`;
-    	#echo "next entry=$next_entry";
+while [ `echo $alt_conflict_list | wc -w` != 0 ]; do
+	tree *root;
+	echo "Conflict List: $alt_conflict_list"; 
+	#take first line from list of conflicts:
+	conflict=`echo "$alt_conflict_list" | head -n 1`
+	#then remove that line from c_to_s
+	alt_conflict_list=`echo "$alt_conflict_list" | tail --lines=+2`;
+    	echo "next conflict=$conflict";
 
 	#if it is a directory (which can be identified by the trailing '/')
-	#the dir only exists on server, and not on locally
-	if echo $next_entry | grep -q -P '/$'; then
-		selection "directory" "$next_entry" "s_to_c";
+	#it means the dir only exists on server and not on locally
+	if echo $conflict | grep -q -P '/$'; then
+		dir_exists_local "$conflict" "$server_root" "$local_root"
+		#since user must either delete or copy (recursively) the
+		#we can delete all conflicting entries that are subfiles or
+		#subfolders
+		alt_conflict_list=`echo "$alt_conflict_list" | grep -P -v "^$conflict"`;
 	else
-		#check if file exists both locally and on server
-		#this is the case if $next_entry is in $c_to_s
-		if echo "$c_to_s" | grep -q $next_entry; then
-			echo "CONFLICT: $next_entry";
-			#remove inconsistencies fom $next_entry (via ??)
-			solve_conflict "$next_entry"
-			#remove $next_entry from opposite list (that is s_to_c)
-			c_to_s=`echo "$c_to_s" | grep -P -v "^$next_entry$"`;	
-			#echo "RESOLVED: $s_to_c";
-		else 
-			selection "file" "$next_entry" "s_to_c";
-		fi;
+		#it is a file.
+		#we resolved all cases where file exists both locally and on server
+		#in the other conflict list
+		#file exists only on local repository
+		file_exists_local "$conflict" "$server_root" "$local_root";
 	fi;
 	
 done;
+

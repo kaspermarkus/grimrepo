@@ -41,7 +41,7 @@ function general_print_file_info {
 # $1 - the name of the file
 # $2 - full path to the file
 function print_local_file_info {
-	general_print_file_info "$1" "$2" "Local";
+	general_print_file_info "$1" "$1$2" "Local";
 }
 
 ####
@@ -50,18 +50,17 @@ function print_local_file_info {
 # in /tmp folder, then running print_file_info
 # on it.
 #
-# $1 - the server to use (eg. kasper@localhost)
-# $2 - The server root 
-# $3 - filename
+# $1 - The server root (in the form: user@server:/path/to/repo) 
+# $2 - filename
 function print_remote_file_info {
 	server=$1;
-	root=$2;
-	file=$3;
+	file=$2;
 	
 	#create temporary file
 	tmpfile=`mktemp`;
 	#copy file from server
-	rsync -azs "$server:$root$file" "$tmpfile";
+	rsync -azs "$server$file" "$tmpfile";
+	echo rsync -azs "$server$file" "$tmpfile";
 	#then print info
 	general_print_file_info "$file" "$tmpfile" "On Server";
 }

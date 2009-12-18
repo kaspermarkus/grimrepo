@@ -28,6 +28,7 @@ function copy_data {
 	to=$3;
 
 	rsync -vrlpts "$from$file" "$to$file";
+	echo rsync -vrlpts "$from$file" "$to$file";
 	if [ $? -ne 0 ]; then 
 		return 53;
 	fi;		
