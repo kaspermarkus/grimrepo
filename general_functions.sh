@@ -10,23 +10,21 @@
 #
 ####################################################
 
-source ~/.grimreporc
-
 ####
 # Check whether the path given is local or on a server
 # this is identified by whether the path is similar to
 # "user@domain:/path/to/repo"
 # or 
 # "/path/to/repo"
-# the first case is obviously on server
+# the first case is obviously on server (remote)
 # 
 # The function returns 1 if the file is remote
 #
 # $1 - root (if remote, it should be in the user@server:root syntax)
 function is_remote {
 	if echo $1 | grep -P -q "^[^@\b]+@[^\b]+:.*"; then 
-		return 0; 
+		return 1; 
 	else 
-		return 1;
+		return 0;
 	fi
 }
