@@ -80,7 +80,7 @@ function confirm_menu {
 function file_exists_only_once_menu {
 	file=$1;
 	placement=$2;
-	noexist=$3;
+	noexists=$3;
 
 	#print menu header:
 	menu_header "File \033[1m$file\033[0m only exists on $placement";
@@ -90,7 +90,7 @@ function file_exists_only_once_menu {
 	printf "3) View file info\n";
 	printf "0) Cancel\n";
 	#get user input and return it:
-	query_untill "1239";
+	query_untill "1230";
 	return $?;	
 }
 
@@ -139,7 +139,7 @@ function dir_exists_only_once_menu {
 	printf "2) Delete from $placement\n";
 	printf "0) Cancel\n";
 	#get user input and return it:
-	query_untill "123";
+	query_untill "120";
 	return $?;	
 }
 
@@ -164,4 +164,21 @@ function dir_exists_local_menu {
 	return $?;	
 }
 
+####
+# Shows a dialog in which it is only possible to sync
+# a file one way or another -- this is the case if we
+# have a conflicting binary file
+#
+# $1 - the file in question
+function sync_only {
+	file=$1;
+	#present a menu
+	menu_header "Binary file \033[1m$file\033[0m is in conflict";
+	printf "1) Syncronize from server (use copy from server)\n"
+	printf "2) Syncronize from this computer (keep copy from this computer)\n";
+	printf "0) Cancel\n";
+	#get user selection, and return it
+	query_untill "120";
+	return $?;
+}
 

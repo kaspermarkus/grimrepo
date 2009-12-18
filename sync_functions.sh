@@ -45,7 +45,8 @@ function delete_data {
 	root=$2;
 
 	#check if we are trying to delete something remote
-	if is_remote "$root$file"; then 
+	is_remote "$root$file"; 
+	if [ $? -eq "1" ]; then 
 		#get the path part of the ssh/path syntax
 		serverroot=`echo "$root" | sed s#^[^:]*:##`
 		#and then get the login/server part for the ssh statement
