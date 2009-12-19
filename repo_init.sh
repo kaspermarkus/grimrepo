@@ -193,8 +193,8 @@ function file_exists_local {
 		if [ $choice -eq "3" ]; then
 			#if user wants to view file info:
 			
-			echo print_local_file_info "$localroot" "$file";
-			print_local_file_info "$localroot" "$file";
+			echo print_local_file_info "$file" "$localroot";
+			print_local_file_info "$file" "$localroot";
 			#after showing info, go back to menu
 			file_exists_local "$file" "$serverroot" "$localroot";
 			return $?;

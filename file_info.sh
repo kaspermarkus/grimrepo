@@ -41,7 +41,8 @@ function general_print_file_info {
 # $1 - the name of the file
 # $2 - full path to the file
 function print_local_file_info {
-	general_print_file_info "$1" "$1$2" "Local";
+	echo general_print_file_info "$1" "$2$1" "Local";
+	general_print_file_info "$1" "$2$1" "Local";
 }
 
 ####
