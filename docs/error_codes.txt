@@ -6,7 +6,12 @@
 
 
 
+53 - Error when syncing file or dir between user and server
 
+63 - Error occured when attempting to delete file remotely or locally
+
+71 - User cancel/quit when attempting to solve conflict between two versions of a binary file
+72 - User cancel/quit when attempting to solve conflict between two versions of a text file
 73 - User cancel/quit when attempting to solve conflict of file existing only in one location and not the other
 74 - User cancel/quit when attempting to solve conflict of directory existing only in one location and not the other
 75 - User choose cancel/quit after attempting to resolve conflict in textfile

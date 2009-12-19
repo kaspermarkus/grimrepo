@@ -166,19 +166,83 @@ function dir_exists_local_menu {
 
 ####
 # Shows a dialog in which it is only possible to sync
-# a file one way or another -- this is the case if we
+# a file one way or another, view file info, or cancel
+# -- this is the case if we 
 # have a conflicting binary file
 #
 # $1 - the file in question
-function sync_only {
+function solve_binary_conflict_menu {
 	file=$1;
 	#present a menu
 	menu_header "Binary file \033[1m$file\033[0m is in conflict";
 	printf "1) Syncronize from server (use copy from server)\n"
 	printf "2) Syncronize from this computer (keep copy from this computer)\n";
+	printf "3) View local file info\n";
+	printf "4) View server file info\n";
 	printf "0) Cancel\n";
 	#get user selection, and return it
-	query_untill "120";
+	query_untill "12340";
 	return $?;
+}
+
+####
+# Shows a dialog in which it is possible to sync
+# a file one way or another, resolve conflict,
+# view file info, or cancel -- this is the case if we 
+# have a conflicting text file
+#
+# $1 - the file in question
+function solve_text_conflict_menu {
+	file=$1;
+	#present a menu
+	menu_header "Text file \033[1m$file\033[0m is in conflict";
+	printf "1) Syncronize from server (use copy from server)\n"
+	printf "2) Syncronize from this computer (keep copy from this computer)\n";
+	printf "3) Resolve conflict in text files (merge)\n";
+	printf "4) View local file info\n";
+	printf "5) View server file info\n";
+	printf "0) Cancel\n";
+	#get user selection, and return it
+	query_untill "123450";
+	return $?;
+}
+
+####
+# Confirm merge menu
+# A confirmation for whether user will accept and propagate
+# the changes made on merge
+function confirm_merge_text_menu {
+	menu_header "Do you want too propagate changes made to server and local computer";      
+	printf "1) Propagate changes to server and local computer\n"
+	printf "0) Cancel\n";
+	#get user selection and return it
+	query_untill "10";
+	return $?;
+}
+
+####
+# Warns that there is a conflict between two files
+#
+# $1 - the conflicting text file
+function warn_text_conflict_menu {
+	file=$1;
+	menu_header "Conflict with text file \033[1m$file\033[0m";
+	read -s -n1 choice;
+}
+
+####
+# Presents the user with vimdiff to be able to solve a conflict
+#
+# $1 - file: conflicting file
+# $2 - localroot: the local root
+# $3 - tmpfile: the temporary file to edit
+function ui_merge_files {
+	file=$1;
+	localroot=$2;
+	tmpfile=$3;
+	
+	#start vimdiff (-d) making files read only (-c) except for 
+	#first buffer (:set noro) which is the tmpfile
+	vim -d -R -c ":set noro" $tmpfile "$GR_LOCALROOT$file";	
 }
 

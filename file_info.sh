@@ -39,7 +39,7 @@ function general_print_file_info {
 # Print the info on the local file to STD_OUT.
 #
 # $1 - the name of the file
-# $2 - full path to the file
+# $2 - root path to the file
 function print_local_file_info {
 	echo general_print_file_info "$1" "$2$1" "Local";
 	general_print_file_info "$1" "$2$1" "Local";

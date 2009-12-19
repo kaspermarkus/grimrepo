@@ -25,60 +25,6 @@ s_to_c=`rsync -vrc -n $GR_SERVER:$GR_SERVERROOT $GR_LOCALROOT | tail --lines=+2 
 c_to_s=`rsync -vrc -n $GR_LOCALROOT $GR_SERVER:$GR_SERVERROOT | tail --lines=+2 | head --lines=-3`
 
 ####
-#Takes care of functionality when a file or dir exists on server but not locally
-#$1: "directory" or "file"
-#$2: $next_entry -- the file/dir in question
-#$3: "c_to_s" or "s_to_c", depending on whether we we are copying from server to local,
-#       or local to server, respectively.
-function selection {
-	tree *root;
-	
-	next_entry=$2;
-
-	if [[ $3 =~ "s_to_c" ]]; then 
-		to="this computer";
-		from="server";
-		rsyncCopy="$GR_SERVER:\"$GR_SERVERROOT$next_entry\" \"$GR_LOCALROOT$next_entry\""
-	else 
-		to="server";
-		from="this computer";
-		rsyncCopy="\"$GR_LOCALROOT$next_entry\" $GR_SERVER:\"$GR_SERVERROOT$next_entry\""
-	fi;
-
-	#ask user what to do:
-	echo "--------------------------------------------------------------------";
-	echo -e "$1 \033[1m$next_entry\033[0m does not exist on $to";
-	echo "--------------------------------------------------------------------";
-	printf "1) Copy from $from\n"
-	printf "2) Delete on $from\n";
-	read -s -n1 choice;
-	#continue to query untill user inputs a, b or c
-	while [[ "$choice" =~ [^12] ]]; do
-		read -s -n1 choice;
-	done; 
-	#if user chooses 1 copy everything from server to local
-	if [ $choice == "1" ]; then 
-		echo "Copying $next_entry from $from to $to";
-		#remove the serverroot part:
-		eval rsync -vrlpts $rsyncCopy;
-		#echo "rsync -vrlpt $rsyncCopy";
-	fi
-	#if user chooses 2, copy everything from local with --delete and -r
-	if [ $choice == "2" ]; then 
-		echo "Deleting $next_entry from $from.";
-		if [[ $3 =~ "s_to_c" ]]; then 
-			ssh $GR_SERVER "rm -rf \"$GR_SERVERROOT$next_entry\"";
-		else 
-		        rm -rf "$GR_LOCALROOT$next_entry";
-		fi;
-	fi
-	#Since we either copied or deleted everything in the $next_entry dir (or file)
-	#we can safely delete all subdirs and files from $s_to_c and $c_to_s
-	s_to_c=`echo "$s_to_c" | grep -P -v "^$next_entry"`;
-	c_to_s=`echo "$c_to_s" | grep -P -v "^$next_entry"`;
-}
-
-####
 # Implements the action used if a file only exists
 # on server and not locally. This is done by presenting
 # user with a menu, and handling his choice.
@@ -252,6 +198,170 @@ function dir_exists_local {
 	#since its a dir, and copying/deleting is recursive, we can remove
 }
 
+####
+# Should be called in case a conflict occurs between two
+# files. It checks whether the file is a text or binary 
+# file. If it is a binary file, the choice will be given
+# to sync it one way or the other. If it is a text file
+# the user will be presented with a merge-program, and 
+# the result will be propagated to both server and client
+#
+# $1 - the filename 
+# $2 - server root (in the form user@location:/path/to/file
+# $2 - local root 
+function solve_conflict {
+	#fix parameters to make sence
+	file=$1;
+	serverroot=$2;
+	localroot=$3;
+
+	#if there is a conflict file exists on both server
+	#and client, so we can safely check client file.
+        
+	#TEXT: file is not binary if file command ends with empty
+	#or text
+	echo file "$localroot$file" pipe grep -q -P "(empty|text)$"; 
+	if file "$localroot$file" | grep -q -P "(empty|text)$"; then 
+		solve_text_conflict "$file" "$serverroot" "$localroot"
+	else
+	#BINARY: no merging possible, either sync from server
+	#or client, depending on user choice:
+		solve_binary_conflict "$file" "$serverroot" "$localroot"
+	fi;
+}
+
+####
+# Solve a conflict between two binary files.
+#
+# $1 - the file in question
+# $2 - serverroot (in the form user@location:/path/to/file 
+# $3 - localroot
+function solve_binary_conflict {
+	file=$1;
+	serverroot=$2;
+	localroot=$3
+
+	#echo sync only $file;
+	#present a menu
+	solve_binary_conflict_menu "$file";
+	choice=$?;
+	#if user chooses "cancel", we quit
+	if [ $choice -eq "0" ]; then
+		exit 71;
+	fi;
+	
+	#if user chooses to copy from server to client:
+	if [ $choice -eq "1" ]; then
+		copy_data "$file" "$serverroot" "$localroot"; 
+	else 
+		if [ $choice -eq "2" ]; then 
+			#user chooses to copy from client to server
+			copy_data "$file" "$localroot" "$serverroot"; 
+		else
+			if [ $choice -eq "3" ]; then 
+				#usr choose to view local file info;
+				print_local_file_info "$file" "$localroot"
+				solve_binary_conflict "$file" "$serverroot" "$localroot";
+				return $?
+			fi;
+			if [ $choice -eq "4" ]; then
+				#usr chooses to view server file info;
+				echo print_remote_file_info "$serverroot" "$file";
+				print_remote_file_info "$serverroot" "$file";
+				solve_binary_conflict "$file" "$serverroot" "$localroot";
+				return $?
+			fi;
+		fi;
+	fi;
+}
+
+####
+# Handles a conflict between to text files. This is done
+# by copying file from server to tmp, and then editing local
+# and tmpfile with some program (depending on on UI).
+#
+# $1 - the conflicting filename
+# $2 - serverroot: the serverroot (in the form user@server:/path/to/root/)
+# $3 - localroot: the local root 
+function solve_text_conflict {
+	file=$1;
+	serverroot=$2;
+	localroot=$3;
+	
+	#print menu to user:
+	solve_text_conflict_menu $file;
+	choice=$?;
+	
+	##if user chooses "cancel", we quit
+	if [ $choice -eq "0" ]; then
+		exit 72;
+	fi;
+	
+	#if user chooses to copy from server to client:
+	if [ $choice -eq "1" ]; then
+		copy_data "$file" "$serverroot" "$localroot"; 
+	else 
+		if [ $choice -eq "2" ]; then 
+			#user chooses to copy from client to server
+			copy_data "$file" "$localroot" "$serverroot"; 
+		else
+			if [ $choice -eq "3" ]; then
+				merge_text_files "$file" "$serverroot" "$localroot";
+			else 
+				if [ $choice -eq "4" ]; then 
+					#usr choose to view local file info;
+					echo print_local_file_info "$file" "$localroot"
+					print_local_file_info "$file" "$localroot"
+					solve_text_conflict "$file" "$serverroot" "$localroot";
+					return $?
+				fi;
+				if [ $choice -eq "5" ]; then
+					#usr chooses to view server file info;
+					print_remote_file_info "$serverroot" "$file";
+					solve_text_conflict "$file" "$serverroot" "$localroot";
+					return $?
+				fi;
+			fi;
+		fi;
+	fi;
+}
+
+####
+# Allows user to merge two conflicting text files. This is done
+# by copying file from server to tmp, and then editing local
+# and tmpfile with some merging program
+# After editing, user is queried on whether
+# he wants to use the new version of the file. If yes, the 
+# local and server version is overwritten with the tmp file.
+# 
+# $1 - the conflicting filename
+# $2 - serverroot: the serverroot (eg. user@server:/path/to/root)
+# $3 - localroot: the localroot
+function merge_text_files {
+	file=$1;
+	serverroot=$2;
+	localroot=$3;
+	#copy version from server to tmp file
+	tmpfile=`mktemp`;
+	#copy serverversion to tmpfile
+	eval rsync -sv "$serverroot$file" "$tmpfile";
+	#warn user:
+	warn_text_conflict_menu "$file";
+	#give user interface to merge
+	ui_merge_files "$file" "$localroot" "$tmpfile"
+	#confirm changes with user
+	confirm_merge_text_menu
+	#if user decides to propagate changes, do it:
+	if [ $choice == "1" ]; then
+		#copy to server:
+		rsync -s "$tmpfile" "$serverroot$file";
+		#overwrite local copy
+		cp "$tmpfile" "$localroot$file";
+	else
+		#user choose cancel and quit
+		solve_text_conflict "$file" "$serverroot" "$localroot";
+	fi;	
+}
 ##############
 # First consider the files that are conflicting from server to local
 ##############
@@ -287,9 +397,7 @@ while [ `echo $conflict_list | wc -w` != 0 ]; do
 		#this is the case if $conflict is in $alt_conflict_list
 		if echo "$alt_conflict_list" | grep -q $conflict; then
 			echo "CONFLICT: $conflict exists in both";
-			echo "TODO: fixme";
-			#remove inconsistencies fom $next_entry (via ??)
-			#TODO solve_conflict "$next_entry";
+			solve_conflict "$conflict" "$server_root" "$local_root";
 			#remove $next_entry from opposite list (that is alt_conflict_list)
 			alt_conflict_list=`echo "$alt_conflict_list" | grep -P -v "^$conflict$"`;	
 			#echo "RESOLVED: $alt_conflict_list";
