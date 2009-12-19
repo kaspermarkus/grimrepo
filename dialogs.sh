@@ -10,6 +10,8 @@
 #
 ####################################################
 
+source ~/.grimreporc
+
 ####
 # Shows a dialog in which it is only possible to sync
 # a file one way or another -- this is the case if we

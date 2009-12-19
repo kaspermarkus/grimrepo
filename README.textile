@@ -1,0 +1,21 @@
+p>. !http://www.hotdog.hu/_data/members1/685/880685/images/f_AngelofDeatm_034cc16.jpg!
+
++**Motivation**+
+
+I have two laptops and one stationary computer. Besides this I have a server at work, as well as a computer at my university. My documents are spread out over all the computers in various versions and structures. 
+
+Versioning: Is not usable due to the hassle of having too keep track off all the stuff in the versioning software too. Eg. when you add a new album to your mp3 collection, you would have to do @svn add mp3newdir@. Furthermore, for good reasons, versioning allows rollbacks, which of course is usefull but requires a lot of overhead, especially when dealing with movie files/mp3's etc etc.
+
+Rsync: You still have to manually rsync stuff. And furthermore, you cannot simply do an @rsync --delete -az local server@ after adding stuff to your local computer, since a newer version of stuff might exist on the server that you do not wish to overwrite or delete.
+
+Hence, the motivation is a need for an intelligent syncronization, in which you can avoid the hassle of versioning, and the problems of rsync not knowing what to keep and what to overwrite. Furthermore, it should just be a background process running, and continuously syncing the computer to a server, only disturbing you when two files conflict, and the program has no way of knowing what to keep and what to change. 
+
+
++**Implementation Considerations**+
+
+The two most obvious choices for programming language was Perl and Bash .. We decided to ask God. So by a flip of a coin, we were told to go for heads (which was decided to be Bash beforehand), hence it is being implemented in Bash. 
+
+
++**The Goal**+
+
+The goal is to create a piece of software, that is stable and does not accidently delete your entire disk (unless told to), that _intelligently synchronizes_ a set of computers. It is should be done in a server/client scheme, but with all the software running on the client, thus adding no requirements to the server, other than some basic tools, such as (ssh). The program should be able to run in the background, and do the syncronization automatically and intelligently, and _only disturb the user when neccessary_, that is, when there is no way the program could know which file should be deleted/changed/etc. In this case, the user should be notified, and able to sort out the conflicts.
