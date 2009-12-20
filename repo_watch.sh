@@ -28,11 +28,11 @@ if [ $((`date +%s` % $timer )) == "0" ]; then
 	#hit our new log
 	
 	echo $backupfile
-	echo  ${file} ${event} ${time} >>  $backupfile
+	echo  ${dir}${file} ${event} ${time} >>  $backupfile
 	last_timestamp=`date +%s`
 	backupfile=$GR_INDEX/$last_timestamp.$machine
 else
 	echo $backupfile
-	echo  ${file} ${event} ${time} >>  $backupfile
+	echo  ${dir}${file} ${event} ${time} >>  $backupfile
 fi
 	 done
