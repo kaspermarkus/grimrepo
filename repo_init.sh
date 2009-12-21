@@ -13,7 +13,12 @@
 #
 ####################################################
 
-source ~/.grimreporc
+if [ -f ~/.grimreporc ]; then
+	source ~/.grimreporc
+else
+	source `pwd`/.grimreporc
+fi
+
 #use pure text menus
 source text_ui/text_menus.sh
 source file_info.sh
