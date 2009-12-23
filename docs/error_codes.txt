@@ -2,9 +2,10 @@
 
 1 - 
 
-
-
-
+30 - Error occured when attempting to create sqlite database
+31 - Error occured while retrieveing data from SQLite database
+32 - Error occured while trying to insert/update data to SQLite database
+33 - Error occured while trying to delete entry from SQLite database
 
 53 - Error when syncing file or dir between user and server
 
