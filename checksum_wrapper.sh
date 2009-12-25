@@ -28,21 +28,28 @@ function get_checksum {
 	localroot=$2;
 
 	if [ -f "$localroot$filepath" ]; then 
-		echo "Taking md5 of file: ";
+		checksum=`get_file_checksum "$1" "$2"`;
 	else 
-		echo "Taking md5 of dir: ";	
+		checksum=`get_dir_checksum "$1" "$2"`;
 	fi;
-	
+	echo "${checksum% *}"
 }
 
-function first_word {
-	#take first word of checksumm
-}
+####
+# Calculates checksum for dir
+#
+# $1 - path to dir, including dirname, relative to local
+#       root
+# $2 - the local root (repository) of the dir 
 function get_dir_checksum {
-		
-	find . -type f -exec md5sum {} \; | md5sum
+	find "$2$1" -type f -exec md5sum {} \; | md5sum;
 }
 
+####
+# Calculates checksum for file 
+#
+# $1 - path to file , including fileame, relative to localroot
+# $2 - the local root (repository) of the file 
 function get_file_checksum {
-	
+	md5sum "$2$1";	
 }
