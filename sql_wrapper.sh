@@ -66,10 +66,10 @@ function do_query {
 	if [ ! -f "grim_repo.sqlite" ]; then 
 		 create_database;
 	fi;
-	echo	sqlite3 $databasename "$query";
-	result=`sqlite3 $databasename "$query"`;
+	echo	sqlite3 $databasename $query;
+	result=`sqlite3 $databasename $query`;
 	errorcode=$?;
-	echo $result;
+	echo do query result: $result with errorcode $?;
 	return $errorcode;
 }
 
@@ -83,14 +83,14 @@ function do_query {
 # $1 - filepath: the entire path to the dir or file including filename
 function get_checksum {
 	filepath=$1;
-
+	echo do_query "SELECT checksum FROM $tablename WHERE filepath=\"$filepath\"";
 	checksum=`do_query "SELECT checksum FROM $tablename WHERE filepath=\"$filepath\""`;
 	errorcode=$?;
-	echo "$checksum"
 	if [ $errorcode != "0" ]; then 
 		echo "ERROR occured while trying to retrieve checksum from database";
 		exit 31;
-	fi; 
+	fi;
+	echo $checksum; 
 }
 
 ####
