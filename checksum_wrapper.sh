@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/bin/bash 
 ####################################################
 # GRIM REPO ########################################
 ####################################################
@@ -17,39 +16,35 @@
 
 
 ####
-# Prints info on the file given as argument to 
-# screen.
+# calc_checksum
 #
-# $1 - path to file, including filename, relative to local
-#       root
-# $2 - the local root (repository) of the file
-function get_checksum {
+# Calculates the checksum of the argument whether its a
+# file or dir
+#
+# $1 - the path to the file
+function calc_checksum {
 	filepath=$1;
-	localroot=$2;
 
 	if [ -f "$localroot$filepath" ]; then 
-		checksum=`get_file_checksum "$1" "$2"`;
+		checksum=`calc_file_checksum "$1"`;
 	else 
-		checksum=`get_dir_checksum "$1" "$2"`;
+		checksum=`calc_dir_checksum "$1"`;
 	fi;
-	echo "${checksum% *}"
+	echo "${checksum%  *}"
 }
 
 ####
 # Calculates checksum for dir
 #
-# $1 - path to dir, including dirname, relative to local
-#       root
-# $2 - the local root (repository) of the dir 
-function get_dir_checksum {
-	find "$2$1" -type f -exec md5sum {} \; | md5sum;
+# $1 - path to dir, including dirname
+function calc_dir_checksum {
+	find "$1" -type f -exec md5sum {} \; | md5sum;
 }
 
 ####
 # Calculates checksum for file 
 #
-# $1 - path to file , including fileame, relative to localroot
-# $2 - the local root (repository) of the file 
-function get_file_checksum {
-	md5sum "$2$1";	
+# $1 - path to file , including fileame
+function calc_file_checksum {
+	md5sum "$1";	
 }
