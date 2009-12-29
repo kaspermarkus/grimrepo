@@ -23,6 +23,7 @@ fi
 source text_ui/text_menus.sh
 source file_info.sh
 source sync_functions.sh
+source repo_bookkeeper.sh
 
 #run list rsync changes from server to local
 #using head and tail to avoid the garbage info from rsync
@@ -440,7 +441,8 @@ while [ `echo $alt_conflict_list | wc -w` != 0 ]; do
 		#file exists only on local repository
 		file_exists_local "$conflict" "$server_root" "$local_root";
 	fi;
-	
 done;
 
-
+#After all conflicts are solved, we clear the database,
+recalculate_all "$GR_LOCALROOT";
+#echo $GR_LOCALROOT
