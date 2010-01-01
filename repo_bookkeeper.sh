@@ -99,28 +99,28 @@ function has_file_changed_remotely {
 # $4 - $dir (dir relative to serverroot)
 # $5 - $localroot
 function has_dir_changed_remotely {
-	server_conflicts=$1;
-	serverinfo=$2;
-	serverroot=$3;
-	dir=$4;
-	localroot=$5;
+	local server_conflicts=$1;
+	local serverinfo=$2;
+	local serverroot=$3;
+	local dir=$4;
+	local localroot=$5;
 
 	echo "SERVERROOTdir: $dir on full list: $server_conflicts";
 	#for each file from serverconflicts that is 
 	#inside dir and is a file (does not end with)
-	relevant_conflicts=`echo "$server_conflicts" | grep "^$dir" | grep -v -P '/$'`;
+	local relevant_conflicts=`echo "$server_conflicts" | grep "^$dir" | grep -v -P '/$'`;
 
 	#loop through them
 	while [ `echo $relevant_conflicts | wc -w` != 0 ]; do
 		#take first line from list of conflicts:
-		conflict=`echo "$relevant_conflicts" | head -n 1`
+		local conflict=`echo "$relevant_conflicts" | head -n 1`
 		#then remove that line from client_conflicts
 		relevant_conflicts=`echo "$relevant_conflicts" | tail --lines=+2`;
 		echo "next conflict=$conflict";
 		
 		#for each, do a checksum check with remote file vs. checksums
 		has_file_changed_remotely "$localroot$conflict" "$serverinfo" "$serverroot$conflict";
-		changed=$?;
+		local changed=$?;
 		#if even a single file has changed, we consider dir changed
 		if [[ $changed == "1" ]]; then
 			return 1;
@@ -172,3 +172,19 @@ function calculate_dir {
 	done;
 	IFS=$SAVEIFS;
 }
+
+####
+# calculate_file 
+#
+# Calculates the md5 sums of the file
+# and enters data into the database
+#
+# $1 - path to file inklusive dirname
+function calculate_file {
+	file=$1;
+	#calculate checksum
+	checksum=`calc_checksum "$file"`;
+	set_checksum "$file" "$checksum";
+}
+
+ 

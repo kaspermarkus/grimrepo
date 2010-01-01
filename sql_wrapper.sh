@@ -125,13 +125,13 @@ echo "do_query INSERT OR REPLACE INTO $tablename ( checksum, filepath ) VALUES (
 }
 
 ####
-# delete_entry
+# delete_file_entry
 #
 # To be used when a file is deleted from local machine.
 # The function simply deletes the file passed as parameter
 #
-# $1 - filepath: the entire path to the dir or file including filename
-function delete_entry {
+# $1 - filepath: the entire path to the file including filename
+function delete_file_entry {
 	filepath=$1;
 	res=`do_query "DELETE FROM $tablename WHERE filepath=\"$filepath\""`;
 	if [ $? != "0" ]; then 
@@ -142,3 +142,21 @@ function delete_entry {
 	#echo do_query "DELETE FROM $tablename WHERE filepath=\"$filepath\" AND local_root=\"$local_root\";";
 }
 
+####
+# delete_dir_entry
+#
+# To be used when a dir is deleted from local machine.
+# The function deletes the dir passed as parameter as
+# well as all the sub_entries
+#
+# $1 - filepath: the entire path to the file including filename
+function delete_dir_entry {
+	filepath=$1;
+	res=`do_query "DELETE FROM $tablename WHERE filepath LIKE \"${filepath}%\""`;
+	if [ $? != "0" ]; then 
+		echo "ERROR occured while trying to delete entry from database";
+		echo "$res";
+		exit 33;
+	fi;
+	#echo do_query "DELETE FROM $tablename WHERE filepath=\"$filepath\" AND local_root=\"$local_root\";";
+}

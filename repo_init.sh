@@ -445,4 +445,5 @@ done;
 
 #After all conflicts are solved, we clear the database,
 recalculate_all "$GR_LOCALROOT";
+tree $GR_LOCALROOT $GR_SERVERROOT
 #echo $GR_LOCALROOT
