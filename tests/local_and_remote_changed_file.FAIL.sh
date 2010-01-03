@@ -20,7 +20,7 @@ function do_test {
 	./repo_init.sh
 
 	echo "change1" > ${GR_LOCALROOT}A/a1
-	echo "change21" > ${GR_SERVERROOT}A/a1
+	echo "change2" > ${GR_SERVERROOT}A/a1
 
 	#make directory locally
 	./repo_sync.sh

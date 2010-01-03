@@ -13,12 +13,197 @@
 . sync_functions.sh
 . repo_bookkeeper.sh
 . sql_wrapper.sh
+. text_ui/text_menus.sh
 
 if [ -f ~/.grimreporc ]; then
 	source ~/.grimreporc
 else
 	source `pwd`/.grimreporc
 fi
+
+####
+# Implements the action used if a directory has been deleted
+# on server, but changed locally. This is done by presenting
+# user with a menu, and handling his choice.
+#
+# $1 - dir: the conflicting dir
+# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
+# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
+function solve_dir_deleted_but_changed_locally {
+	local dir=$1;
+	local serverroot=$2;
+	local localroot=$3;
+
+	#present conflict to user (choice saved in $?)
+	dir_deleted_but_changed_locally_menu "$dir"
+	local choice=$?;
+	#if user chooses "cancel", we quit
+	if [ $choice -eq "0" ]; then
+		exit 76;
+	fi;
+
+	#if user chooses to copy:
+	if [ $choice -eq "1" ]; then
+		copy_data "$dir" "$localroot" "$serverroot"; 
+		#update database
+		calculate_dir "$localroot$dir"
+	else #user chooses to delete -- confirm first:
+		confirm_menu "Do you really want to delete the modified directory: \033[1m$dir\033[0m from local machine";
+		local confirmed=$?;
+		#if user regrets, give him new prompt on what to do
+		if [ $confirmed -eq "0" ]; then
+			solve_dir_deleted_but_changed_locally "$dir" "$serverroot" "$localroot";
+			return $?;
+		else
+			delete_data "$dir" "$localroot";
+			#update database accordingly
+			delete_dir_entry "$localroot$dir"
+		fi; #end if user prompted on certain to delete
+	fi; #end if user chooses copy or delete
+}
+
+####
+# Implements the action used if a directory has been deleted
+# on local machine, but changed on server. This is done by presenting
+# user with a menu, and handling his choice.
+#
+# $1 - dir: the conflicting dir
+# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
+# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
+function solve_dir_deleted_but_changed_on_server {
+	local dir=$1;
+	local serverroot=$2;
+	local localroot=$3;
+
+	#present conflict to user (choice saved in $?)
+	dir_deleted_but_changed_on_server_menu "$dir"
+	local choice=$?;
+	#if user chooses "cancel", we quit
+	if [ $choice -eq "0" ]; then
+		exit 77;
+	fi;
+
+	#if user chooses to copy:
+	if [ $choice -eq "1" ]; then
+		copy_data "$dir" "$serverroot" "$localroot"; 
+		#update database
+		calculate_dir "$localroot$dir"
+	else #user chooses to delete -- confirm first:
+		confirm_menu "Do you really want to delete the modified directory: \033[1m$dir\033[0m from server";
+		local confirmed=$?;
+		#if user regrets, give him new prompt on what to do
+		if [ $confirmed -eq "0" ]; then
+			solve_dir_deleted_but_changed_on_server "$dir" "$serverroot" "$localroot";
+			return $?;
+		else
+			delete_data "$dir" "$serverroot";
+			#update database accordingly
+			delete_dir_entry "$localroot$dir"
+		fi; #end if user prompted on certain to delete
+	fi; #end if user chooses copy or delete
+}
+
+####
+# Implements the action used if a file has been deleted from server
+# but changed locally. This is done by presenting
+# user with a menu, and handling his choice.
+#
+# $1 - file: the conflicting file
+# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
+# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
+function solve_file_deleted_but_changed_locally {
+	local file=$1;
+	local serverroot=$2;
+	local localroot=$3;
+	
+	#present conflict to user (choice saved in $?)
+	file_deleted_but_changed_locally_menu "$file"
+	local choice=$?;
+	#if user chooses "cancel", we quit
+	if [ $choice -eq "0" ]; then
+		exit 78;
+	fi;
+
+	#if user chooses to copy:
+	if [ $choice -eq "1" ]; then
+		copy_data "$file" "$localroot" "$serverroot"; 
+		#update database
+		calculate_file "$localroot$file"
+	else #user choosfes to delete -- confirm first:
+		if [ $choice -eq "3" ]; then
+			#if user wants to view file info:
+			
+			echo print_local_file_info "$file" "$localroot";
+			print_local_file_info "$file" "$localroot";
+			#after showing info, go back to menu
+			solve_file_deleted_but_changed_locally "$file" "$serverroot" "$localroot";
+			return $?;
+		else 	
+			confirm_menu "Do you really want to delete the modified file: \033[1m$file\033[0m from local machine";
+			local confirmed=$?;
+			#if user regrets, give him new prompt on what to do
+			if [ $confirmed -eq "0" ]; then
+				solve_file_deleted_but_changed_locally "$file" "$serverroot" "$localroot";
+				return $?;
+			else
+				delete_data "$file" "$localroot";
+				#update database accordingly
+				delete_file_entry "$localroot$file"
+			fi;
+		fi; #end if user prompted on certain to delete
+	fi; #end if user chooses copy or delete
+}
+
+####
+# Implements the action used if a file has been deleted from local machine
+# but changed on server. This is done by presenting
+# user with a menu, and handling his choice.
+#
+# $1 - file: the conflicting file
+# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
+# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
+function solve_file_deleted_but_changed_on_server {
+	local file=$1;
+	local serverroot=$2;
+	local localroot=$3;
+	
+	#present conflict to user (choice saved in $?)
+	file_deleted_but_changed_on_server_menu "$file"
+	local choice=$?;
+	#if user chooses "cancel", we quit
+	if [ $choice -eq "0" ]; then
+		exit 79;
+	fi;
+
+	#if user chooses to copy:
+	if [ $choice -eq "1" ]; then
+		copy_data "$file" "$serverroot" "$localroot"; 
+		#update database
+		calculate_file "$localroot$file"
+	else #user choosfes to delete -- confirm first:
+		if [ $choice -eq "3" ]; then
+			#if user wants to view file info:
+			
+			echo print_remote_file_info "$serverroot" "$file";
+			print_remote_file_info "$serverroot" "$file";
+			#after showing info, go back to menu
+			solve_file_deleted_but_changed_on_server "$file" "$serverroot" "$localroot";
+			return $?;
+		else 
+			confirm_menu "Do you really want to delete the modified file: \033[1m$file\033[0m from server";
+			local confirmed=$?;
+			#if user regrets, give him new prompt on what to do
+			if [ $confirmed -eq "0" ]; then
+				solve_file_deleted_but_changed_on_server "$file" "$serverroot" "$localroot";
+				return $?;
+			else
+				delete_data "$file" "$serverroot";
+				#update database accordingly
+				delete_file_entry "$localroot$file"
+			fi; #end if user prompted on certain to delete
+		fi; 
+	fi; #end if user chooses copy or delete
+}
 
 #get lists of changes using rsync
 #use head and tail to avoid the garbage info from rsync
@@ -61,7 +246,8 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 			if [[ $changed == "1" ]]; then
 				#dir deleted on server, but has been changed locally
 				echo "$conflict: DELETED ON SERVER BUT CHANGED LOCALLY";
-				#TODO: solve CONFLICT
+				#give user the choice between copying or delete
+				solve_dir_deleted_but_changed_locally "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT"
 			else
 				echo "$conflict: DELETED ON SERVER, UNCHANGED LOCALLY - DELETE FROM LOCAL";
 				#else dir deleted on server and unchanged locally
@@ -87,9 +273,15 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 				remote_changed=$?;
 				if [[ $remote_changed == "1" ]]; then
 					#file also changed on server
-					#TODO: resolve CONFLICT
 					echo "$conflict: FILE CHANGED BOTH LOCALLY AND REMOTELY -- CONFLICT"
-					#TODO: delete entry from server_conflicts after resolved conflict
+					solve_conflict "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT"
+					#either a merging or copying of files has taken place
+					#in any case we can update database
+					calculate_file "$GR_LOCALROOT$conflict"
+					echo calculate_file "$GR_LOCALROOT" "$conflict"
+					#delete entry from server_conflicts after resolved conflict
+					server_conflicts=`echo "$server_conflicts" | grep -P -v "^$conflict\$"`;
+					echo echo "$server_conflicts" | grep -P -v "^$conflict\$";
 				else #file only changed locally only
 					echo "$conflict: FILE CHANGED LOCALLY ONLY -- COPY TO SERVER";
 					#copy file to server
@@ -127,9 +319,9 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 				has_changed_locally "$GR_LOCALROOT$conflict";
 				changed=$?;
 				if [[ $changed == "1" ]]; then
-					#file deleted on server, but modified locally
-					#TODO: solve CONFLICT
 					echo "$conflict: FILE DELETED ON SERVER BUT MODIFIED LOCALLY -- CONFLICT";
+					#file deleted on server, but modified locally
+					 solve_file_deleted_but_changed_locally "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT";
 				else #file deleted on server, untouched locally
 					echo "$conflict: FILE DELETED ON SERVER -- DELETE LOCALLY";
 					#else dir deleted on server and unchanged locally
@@ -174,7 +366,7 @@ while [ `echo $server_conflicts | wc -w` != 0 ]; do
 			if [[ $changed == "1" ]]; then
 				#dir deleted on server, but has been changed locally
 				echo "$conflict: DELETED ON LOCAL BUT CHANGED ON SERVER";
-				#TODO: solve CONFLICT
+				solve_dir_deleted_but_changed_on_server "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT";
 			else
 				echo "$conflict: DELETED ON LOCAL, UNCHANGED ON SERVER - DELETE FROM SERVER";
 				#else dir deleted on local machine and unchanged server
@@ -207,8 +399,8 @@ while [ `echo $server_conflicts | wc -w` != 0 ]; do
 			changed=$?;
 			if [[ $changed == "1" ]]; then
 				#file deleted on local, but modified on server
-				#TODO: solve CONFLICT
 				echo "$conflict: FILE DELETED ON LOCALLY BUT MODIFIED ON SERVER -- CONFLICT";
+			 	solve_file_deleted_but_changed_on_server  "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT";
 			else #file deleted on on local machine, untouched on server
 				#else file deleted on local machine and unchanged on server
 				echo "$conflict: FILE DELETED LOCALLY -- DELETE FROM SERVER";

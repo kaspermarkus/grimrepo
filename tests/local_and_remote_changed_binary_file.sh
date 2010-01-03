@@ -11,16 +11,18 @@ function do_test {
 	#make two identical dirs
 	rm -rf "${GR_LOCALROOT}" "$GR_SERVERROOT"
 	mkdir -p ${GR_LOCALROOT}{A,B,C}
-	touch ${GR_LOCALROOT}{A/a1,B/b1,B/b2,C/c1}
+	touch ${GR_LOCALROOT}{B/b1,B/b2,C/c1}
+	cp `pwd`/tests/README.png "${GR_LOCALROOT}A";
 	cp -r ${GR_LOCALROOT} ${GR_SERVERROOT}
-
+	
 	workingdir=`pwd`;
 
 	#initialize repository
 	./repo_init.sh
 
-	echo "change1" > ${GR_LOCALROOT}A/a1
-	echo "change21" > ${GR_SERVERROOT}A/a1
+	
+	echo "change1" > ${GR_LOCALROOT}A/README.png
+	echo "change2" > ${GR_SERVERROOT}A/README.png
 
 	#make directory locally
 	./repo_sync.sh

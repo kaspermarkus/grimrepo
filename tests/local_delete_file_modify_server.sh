@@ -19,7 +19,7 @@ function do_test {
 	cp -r "${GR_LOCALROOT}" "${GR_SERVERROOT}"
 
 	#initialize repository
-	#./repo_init.sh
+	./repo_init.sh
 
 	#delete dir from local 
 	rm -f "${GR_LOCALROOT}"C/c1

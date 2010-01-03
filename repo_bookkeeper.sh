@@ -179,7 +179,7 @@ function calculate_dir {
 # Calculates the md5 sums of the file
 # and enters data into the database
 #
-# $1 - path to file inklusive dirname
+# $1 - path to file inklusive filename
 function calculate_file {
 	file=$1;
 	#calculate checksum
