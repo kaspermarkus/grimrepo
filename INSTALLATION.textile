@@ -1,0 +1,18 @@
+h1. Installation
+
+Installation is pretty straight-forward.
+The ".grimreporc" configuration file should reside in the user home director. 
+And the repo_* programs should be placed in a directory listed in $PATH
+
+h3. Recommendations
+
+To make sure that ssh commands works without user involement,
+please make sure public key authentication is activated and working.
+
+h3. Install instructions (tbd)
+
+
+h3. Using git?
+
+The main source repository is now available at github: http://github.com/kaspermarkus/grimrepo/
+
