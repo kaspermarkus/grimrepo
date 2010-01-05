@@ -9,16 +9,15 @@ fi
 function do_test {
 	#make two identical dirs
 	rm -rf "${GR_LOCALROOT}" "$GR_SERVERROOT"
-	mkdir -p ${GR_LOCALROOT}{A,B,C}
-	touch ${GR_LOCALROOT}{A/a1,B/b1,B/b2,C/c1}
-	cp -r ${GR_LOCALROOT} ${GR_SERVERROOT}
-
-	workingdir=`pwd`;
+	mkdir -p "${GR_LOCALROOT}"{A,B,C}
+	touch "${GR_LOCALROOT}"{A/a1,B/b1,B/b2,C/c1}
+	cp -r "${GR_LOCALROOT}" "${GR_SERVERROOT}"
 
 	#initialize repository
 	./repo_init.sh
 
-	mkdir ${GR_LOCALROOT}D
+	#delete dir from server
+	rm -rf "${GR_SERVERROOT}"C
 	#make directory locally
 	./repo_sync.sh
 }

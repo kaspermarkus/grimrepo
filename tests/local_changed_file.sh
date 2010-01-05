@@ -18,7 +18,8 @@ function do_test {
 	#initialize repository
 	./repo_init.sh
 
-	mkdir ${GR_LOCALROOT}D
-	#make directory locally
+	#change local file:
+	echo "changed" > ${GR_LOCALROOT}A/a1
+	
 	./repo_sync.sh
 }

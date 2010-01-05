@@ -2,9 +2,10 @@
 
 1 - 
 
-
-
-
+30 - Error occured when attempting to create sqlite database
+31 - Error occured while retrieveing data from SQLite database
+32 - Error occured while trying to insert/update data to SQLite database
+33 - Error occured while trying to delete entry from SQLite database
 
 53 - Error when syncing file or dir between user and server
 
@@ -15,3 +16,7 @@
 73 - User cancel/quit when attempting to solve conflict of file existing only in one location and not the other
 74 - User cancel/quit when attempting to solve conflict of directory existing only in one location and not the other
 75 - User choose cancel/quit after attempting to resolve conflict in textfile
+76 - User cancel/quit when attempting to solve a conflict in which dir existed on server and was changed locally
+77 - User cancel/quit when attempting to solve a conflict in which dir existed on client and was changed on server
+78 - User cancel/quit when attempting to solve a conflict in which file existed on server and was changed locally
+79 - User cancel/quit when attempting to solve a conflict in which file existed on client and was changed on server

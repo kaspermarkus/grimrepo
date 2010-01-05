@@ -246,3 +246,104 @@ function ui_merge_files {
 	vim -d -R -c ":set noro" $tmpfile "$GR_LOCALROOT$file";	
 }
 
+####
+# Should be used when a file has been deleted from one location
+# but has been changed in another location.
+# Gives the user the option to either
+# copy it, so it exists in both locations, or delete it so
+# it does not exist at all. Furthermore, an option exists
+# to let user view file info, and one to cancel.
+#
+# $1 - file: the filename and the path
+# $2 - placement: the location where file exists (eg. "server")
+# $3 - noexist: the location where it does not exist (eg. "this computer")
+#
+# returns - the value selected by the user
+function file_deleted_but_changed_menu {
+	file=$1;
+	placement=$2;
+	noexists=$3;
+
+	#print menu header:
+	menu_header "File \033[1m$file\033[0m deleted on $noexists but changed on $placement";
+	#print options:
+	printf "1) Copy changed version from $placement to $noexists\n";
+	printf "2) Delete changed version from $placement\n";
+	printf "3) View file info\n";
+	printf "0) Cancel\n";
+	#get user input and return it:
+	query_untill "1230";
+	return $?;	
+}
+
+####
+# Should be used when a file has been deleted locally
+# but changed on server. Presents user with the
+# option to either copy, delete, view file, or cancel
+#
+# $1 - file: the filename and path relative to root
+function file_deleted_but_changed_on_server_menu {
+	file_deleted_but_changed_menu "$1" "server" "this computer";
+	return $?;
+}
+####
+# Should be used when a file has been deleted on server
+# but changed locally. Presents user with the
+# option to either copy, delete, view file, or cancel
+#
+# $1 - file: the filename and path relative to root
+function file_deleted_but_changed_locally_menu {
+	file_deleted_but_changed_menu "$1" "this computer" "server";
+	return $?;	
+}
+
+####
+# Should be used when a directory has been deleted in one
+# location, but changed in the other. Gives the user the option to either
+# copy it, so it exists in both locations, or delete it so
+# it does not exist at all. Furthermore, an option exists
+# to let user cancel.
+#
+# $1 - file: the filename and the path
+# $2 - placement: the location where file exists (eg. "server")
+# $3 - noexist: the location where it does not exist (eg. "this computer")
+#
+# returns - the value selected by the user
+function dir_deleted_but_changed_menu {
+	dir=$1;
+	placement=$2;
+	noexist=$3;
+
+	#print menu header:
+	menu_header "Directory \033[1m$dir\033[0m has been deleted from $noexist but modified on $placement";
+	#print options:
+	printf "1) Copy from $placement to $noexist\n";
+	printf "2) Delete from $placement\n";
+	printf "0) Cancel\n";
+	#get user input and return it:
+	query_untill "120";
+	return $?;	
+}
+
+####
+# Should be used when a dir has been deleted on 
+# local machine, but changed on server. Presents user with the
+# option to either copy, delete or cancel
+#
+# $1 - dir: the dirname and path relative to root
+function dir_deleted_but_changed_on_server_menu {
+	dir_deleted_but_changed_menu "$1" "server" "this computer";
+	return $?;
+}
+####
+# Should be used when a dir only exists locally only
+# and not on server. Presents user with the
+# option to either copy, delete, or cancel
+#
+# $1 - dir: the dirname and path relative to root
+function dir_deleted_but_changed_locally_menu {
+	dir_deleted_but_changed_menu "$1" "this computer" "server";
+	return $?;	
+}
+
+

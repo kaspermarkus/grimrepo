@@ -18,7 +18,7 @@ function do_test {
 	#initialize repository
 	./repo_init.sh
 
-	mkdir ${GR_LOCALROOT}D
+	mkdir ${GR_SERVERROOT}D
 	#make directory locally
 	./repo_sync.sh
 }

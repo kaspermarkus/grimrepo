@@ -6,6 +6,7 @@ if [ -f ~/.grimreporc ]; then
 else 
 	source `pwd`/.grimreporc
 fi
+
 function do_test {
 	#make two identical dirs
 	rm -rf "${GR_LOCALROOT}" "$GR_SERVERROOT"
@@ -18,7 +19,9 @@ function do_test {
 	#initialize repository
 	./repo_init.sh
 
-	mkdir ${GR_LOCALROOT}D
+	echo "change1" > ${GR_LOCALROOT}A/a1
+	echo "change2" > ${GR_SERVERROOT}A/a1
+
 	#make directory locally
 	./repo_sync.sh
 }
