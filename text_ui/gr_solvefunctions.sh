@@ -1,16 +1,31 @@
+#!/bin/bash
+
+####################################################
+# GRIM REPO ########################################
+####################################################
+# gr_solvfunctions.sh
+#
+# Functions for handling conflicts. They present user
+# with choices on how to handle the conflict, and echoes
+# the ACTION decided on by user. The functions does
+# no themself actually solve any conflicts, they 
+# simply gets the users choice on how to handle the action
+#
+####################################################
+
+source gr_textmenus.sh
+source gr_constants.sh
 
 ####
-# Implements the action used if a directory has been deleted
-# on server, but changed locally. This is done by presenting
-# user with a menu, and handling his choice.
+# To be called when a dir has been deleted on server,
+# but changed locally. This is a conflict, and the user
+# is presented with options on how to handle this. 
+# The choice made by user, is echoed as the action to be taken
+# ie. COPY_TO_SERVER or DELETE_LOCAL
 #
 # $1 - dir: the conflicting dir
-# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
-# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
 function solve_dir_deleted_but_changed_locally {
 	local dir=$1;
-	local serverroot=$2;
-	local localroot=$3;
 
 	#present conflict to user (choice saved in $?)
 	dir_deleted_but_changed_locally_menu "$dir"
@@ -22,9 +37,7 @@ function solve_dir_deleted_but_changed_locally {
 
 	#if user chooses to copy:
 	if [ $choice -eq "1" ]; then
-		copy_data "$dir" "$localroot" "$serverroot"; 
-		#update database
-		calculate_dir "$localroot$dir"
+		return $COPY_TO_SERVER;
 	else #user chooses to delete -- confirm first:
 		confirm_menu "Do you really want to delete the modified directory: \033[1m$dir\033[0m from local machine";
 		local confirmed=$?;
@@ -33,25 +46,21 @@ function solve_dir_deleted_but_changed_locally {
 			solve_dir_deleted_but_changed_locally "$dir" "$serverroot" "$localroot";
 			return $?;
 		else
-			delete_data "$dir" "$localroot";
-			#update database accordingly
-			delete_dir_entry "$localroot$dir"
+			return $DELETE_LOCAL;
 		fi; #end if user prompted on certain to delete
 	fi; #end if user chooses copy or delete
 }
 
 ####
-# Implements the action used if a directory has been deleted
-# on local machine, but changed on server. This is done by presenting
-# user with a menu, and handling his choice.
+# To be called when a dir has been deleted locally,
+# but changed on server. This is a conflict, and the user
+# is presented with options on how to handle this. 
+# The choice made by user, is echoed as the action to be taken
+# ie. COPY_TO_LOCAL or DELETE_SERVER
 #
 # $1 - dir: the conflicting dir
-# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
-# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
 function solve_dir_deleted_but_changed_on_server {
 	local dir=$1;
-	local serverroot=$2;
-	local localroot=$3;
 
 	#present conflict to user (choice saved in $?)
 	dir_deleted_but_changed_on_server_menu "$dir"
@@ -63,9 +72,7 @@ function solve_dir_deleted_but_changed_on_server {
 
 	#if user chooses to copy:
 	if [ $choice -eq "1" ]; then
-		copy_data "$dir" "$serverroot" "$localroot"; 
-		#update database
-		calculate_dir "$localroot$dir"
+		echo "COPY_TO_LOCAL";
 	else #user chooses to delete -- confirm first:
 		confirm_menu "Do you really want to delete the modified directory: \033[1m$dir\033[0m from server";
 		local confirmed=$?;
@@ -74,9 +81,7 @@ function solve_dir_deleted_but_changed_on_server {
 			solve_dir_deleted_but_changed_on_server "$dir" "$serverroot" "$localroot";
 			return $?;
 		else
-			delete_data "$dir" "$serverroot";
-			#update database accordingly
-			delete_dir_entry "$localroot$dir"
+			echo "DELETE_SERVER";
 		fi; #end if user prompted on certain to delete
 	fi; #end if user chooses copy or delete
 }
