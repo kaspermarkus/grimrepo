@@ -24,10 +24,9 @@ source checksum_wrapper.sh
 function file_existed {
 	file=$1;
 	checksum=`get_checksum "$file"`;
-	#echo get_checksum "$file" 
-	echo cheksum is: $checksum; 
+	echo "cheksum is: $checksum" 1>&2; 
 	if [[ "$checksum" != "" ]]; then 
-		echo "1";
+		#echo "1";
 		return 1;
 	else
 		echo "0";
@@ -50,10 +49,10 @@ function has_changed_locally {
 	#check new checksum vs. old checksum
 	if [[ `calc_checksum "$file"` != `get_checksum "$file"` ]]; then
 		#has changed:
-		echo "1";
+		#echo "1";
 		return 1;
 	else 
-		echo "0"
+		#echo "0"
 		return 0
 	fi; 
 }
@@ -77,7 +76,7 @@ function has_file_changed_remotely {
 	#check new checksum vs. old checksum
 	if [[ `calc_remote_file_checksum "$serverinfo" "$remotefile"` != `get_checksum "$localfile"` ]]; then
 		#has changed:
-		echo "1";
+		#echo "1";
 		return 1;
 	else 
 		echo "0"
