@@ -23,4 +23,7 @@ export GR_INDEX=`pwd`/.grimrepo
 #timespan for each log (seconds)
 export GR_LOG_TIME=10
 
+#setup path to files
+export GR_PATH=`pwd`
+
 #rsync options

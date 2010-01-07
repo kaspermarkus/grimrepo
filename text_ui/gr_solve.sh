@@ -11,21 +11,35 @@
 #
 ####################################################
 
-. gr_solvefunctions.sh
+if [ -f ~/.grimreporc ]; then
+	source ~/.grimreporc
+else
+	source `pwd`/.grimreporc
+fi
+	    
+source "$GR_PATH/text_ui/gr_solvefunctions.sh";
+#source "${text_ui_base}gr_solvefunctions.sh";
+source "$GR_PATH/text_ui/gr_constants.sh";
 
 ####
 # solves a conflict
 #
 # $1 - The string presented in the header
 function solve_all {
-	while [[ $conflict != "" ]]; do
+
+	#sync, and get the newest conflict:
+	local conflict=`bash $GR_PATH/text_ui/gr_autosync.sh`;
+	solve_conflict "$conflict";
+	local returned=$?;
+	#while [[ $conflict != "" ]]; do
 		#sync, and get the newest conflict:
-		local conflict=`gr_autosync.sh`;
+	#	conflict=`${text_ui_base}gr_autosync.sh`;
 		#if a conflict exists, solve it:
-		if [[ $conflict != "" ]]; then
-			echo `solve_conflict "$conflict"`;
-		fi;
-	done;
+	#	if [[ $conflict != "" ]]; then
+			printf "$conflict\n${ACTIONS[$returned]}\n"; 
+			#echo `solve_conflict "$conflict"`;
+	#	fi;
+	#done;
 }
 
 
@@ -53,8 +67,8 @@ function solve_conflict {
 	if [[ $conflict_type == "DIR_DELETED_LOCAL_CHANGED_SERVER" ]]; then
 		solve_dir_deleted_but_changed_on_server "$filename";
 		returned=$?;
-	fi; 
-	printf "$conflictstring${ACTIONS[$returned]}\n"; 
+	fi;
+	return $returned;
 }
 
 ##

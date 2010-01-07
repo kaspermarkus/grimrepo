@@ -13,8 +13,8 @@
 #
 ####################################################
 
-source gr_textmenus.sh
-source gr_constants.sh
+source "$GR_PATH/text_ui/gr_textmenus.sh";
+source "$GR_PATH/text_ui/gr_constants.sh";
 
 ####
 # To be called when a dir has been deleted on server,
