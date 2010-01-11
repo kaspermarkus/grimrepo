@@ -68,25 +68,14 @@ function solve_conflict {
 		solve_dir_deleted_but_changed_on_server "$filename";
 		returned=$?;
 	fi;
+	if [[ $conflict_type == "FILE_DELETED_SERVER_CHANGED_LOCAL" ]]; then
+		solve_file_deleted_but_changed_locally "$filename";
+		returned=$?;
+	fi;
+	if [[ $conflict_type == "FILE_DELETED_LOCAL_CHANGED_SERVER" ]]; then
+		solve_file_deleted_but_changed_on_server "$filename";
+		returned=$?;
+	fi;
 	return $returned;
 }
-
-##
-# $1 - file: the conflicting file
-# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
-# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
-#function solve_file_deleted_but_changed_locally {
-##
-
-####
-# $1 - file: the conflicting file
-# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
-# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
-#function solve_file_deleted_but_changed_on_server {
-#
-#
-# $1 - the filename 
-# $2 - server root (in the form user@location:/path/to/file
-# $2 - local root 
-#function solve_conflict {
 
