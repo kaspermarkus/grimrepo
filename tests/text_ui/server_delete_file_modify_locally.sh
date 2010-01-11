@@ -6,10 +6,9 @@
 
 if [ -f ~/.grimreporc ]; then
 	source ~/.grimreporc
-else
+else 
 	source `pwd`/.grimreporc
-fi
-    
+fi    
 source "$GR_PATH/text_ui/gr_solve.sh";
 
 function do_test {
@@ -23,7 +22,7 @@ function do_test {
 	./repo_init.sh
 
 	#delete dir from server
-	rm -rf "${GR_SERVERROOT}"C
+	rm -f "${GR_SERVERROOT}"C/c1
 	echo "changes" > "${GR_LOCALROOT}C/c1"	
 	solve_all
 }

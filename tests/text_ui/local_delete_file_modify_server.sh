@@ -4,9 +4,10 @@
 #but where contents (a file) has been modified
 #locally
 
+#sets up a test case for repo_sync and repo_watch
 if [ -f ~/.grimreporc ]; then
 	source ~/.grimreporc
-else
+else 
 	source `pwd`/.grimreporc
 fi
     
@@ -22,9 +23,9 @@ function do_test {
 	#initialize repository
 	./repo_init.sh
 
-	#delete dir from server
-	rm -rf "${GR_SERVERROOT}"C
-	echo "changes" > "${GR_LOCALROOT}C/c1"	
+	#delete dir from local 
+	rm -f "${GR_LOCALROOT}"C/c1
+	echo "changes" > "${GR_SERVERROOT}C/c1"	
 	solve_all
 }
 
