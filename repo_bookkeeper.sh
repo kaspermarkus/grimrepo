@@ -71,8 +71,8 @@ function has_file_changed_remotely {
 	localfile=$1;
 	serverinfo=$2;
 	remotefile=$3;
-	echo calc_remote_file_checksum "$serverinfo" "$remotefile"
-	echo get_checksum "$localfile"
+	#echo calc_remote_file_checksum "$serverinfo" "$remotefile"
+	#echo get_checksum "$localfile"
 	#check new checksum vs. old checksum
 	if [[ `calc_remote_file_checksum "$serverinfo" "$remotefile"` != `get_checksum "$localfile"` ]]; then
 		#has changed:
