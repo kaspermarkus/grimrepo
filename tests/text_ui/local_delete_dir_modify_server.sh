@@ -1,12 +1,13 @@
 #!/bin/bash
 
-#The case where a directory is deleted on server,
+#The case where a directory is deleted on local,
 #but where contents (a file) has been modified
-#locally
+#server
 
+#sets up a test case for repo_sync and repo_watch
 if [ -f ~/.grimreporc ]; then
 	source ~/.grimreporc
-else
+else 
 	source `pwd`/.grimreporc
 fi
     
@@ -23,8 +24,8 @@ function do_test {
 	./repo_init.sh
 
 	#delete dir from server
-	rm -rf "${GR_SERVERROOT}"C
-	echo "changes" > "${GR_LOCALROOT}C/c1"	
+	rm -rf "${GR_LOCALROOT}"C
+	echo "changes" > "${GR_SERVERROOT}C/c1"	
 	solve_all
 }
 

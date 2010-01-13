@@ -41,7 +41,7 @@ while getopts ":hs:" opt; do
 done
 
 #do we have any solutions?1
-if [ ! -z $conflictsolution ]; then
+if [ ! -z "$conflictsolution" ]; then
 
 	echo "got solving answer: $conflictsolution" 1>&2;
 	solution_filename=`printf "$conflictsolution" 	   | head -n 1 | tail -n 1`
@@ -127,7 +127,7 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 		#if dir did NOT exist on last sync, it must have been created on local machine
 		file_existed "$GR_LOCALROOT$conflict";
 		existed=$?
-		#echo "returned $existed";
+		#did not exist on last sync -- echo "returned $existed";
 		if [[ $existed == "0" ]]; then 
 			echo "$conflict HAS BEEN CREATED LOCALLY" 1>&2 ;
 			#dir must have been created on local machine, copy to server
@@ -189,197 +189,196 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 						exit 1
 					esac
 
-				else
+				else #solution_conflict_type not set, eg. user has not set an action for conflict
 					set_conflict_state  "$conflict\nDIR_DELETED_SERVER_CHANGED_LOCAL\n$chksum_c\n$chksum_s";
 					#give user the choice between copying or delete
 				fi
 
-			else
-				echo "$conflict: DELETED ON SERVER, UNCHANGED LOCALLY - DELETE FROM LOCAL" 1>&2 ;
-				#else dir deleted on server and unchanged locally
-				delete_data "$conflict" "$GR_LOCALROOT"
-				#update database
-				delete_dir_entry "$GR_LOCALROOT$conflict";
-			fi; 
+		else #$changed == "0" -- not changed locally
+			>>>>>>> text_ui
+			echo "$conflict: DELETED ON SERVER, UNCHANGED LOCALLY - DELETE FROM LOCAL" 1>&2 ;
+			#else dir deleted on server and unchanged locally
+			delete_data "$conflict" "$GR_LOCALROOT"
+			#update database
+			delete_dir_entry "$GR_LOCALROOT$conflict";
+		fi; 
+	fi;
+	#Delete all sub-entries with dir from client_conflicts, since we solved all
+	#conflicts with those by either copy, delete or manually
+	client_conflicts=`echo "$client_conflicts" | grep -P -v "^$conflict"`;
+else #it is a file
+	#if file conflicts on both lists, it means it exists, but have been 
+	#changed one or both places
+	if echo "$server_conflicts" | grep -q $conflict; then
+		#file exists in both places
+		#check if file has changed
+		has_changed_locally "$GR_LOCALROOT$conflict";
+		changed=$?;
+		if [[ $changed == "1" ]]; then
+			#file changed locally
+			has_file_changed_remotely "$GR_LOCALROOT$conflict" "$GR_SERVER" "$GR_SERVERROOT$conflict";
+			remote_changed=$?;
+			if [[ $remote_changed == "1" ]]; then
+				#file also changed on server
+				echo "$conflict: FILE CHANGED BOTH LOCALLY AND REMOTELY -- CONFLICT" 1>&2  ;
+
+
+				chksum_c=`get_checksum "$GR_LOCALROOT$conflict"`
+				chksum_s=`calc_remote_file_checksum $GR_SERVER "$GR_SERVERROOT$conflict"`
+
+				if [ "$solution_conflict_type" == "FILE_CHANGED_BOTH" ]; then
+					echo "got solution, checking if we got usable solution" 1>&2;
+					#chksums correct? -TODO we overwriting/deleting without mutex
+					#chk chksum for the file/dir to be deleted
+					case "$solution_action" in
+						COPY_TO_SERVER)
+						echo "copying $GR_LOCALROOT$conflict to server" 1>&2;
+						#chksum match?
+						if [[ "$solution_chksumlocal" == "$chksum_c" && "$solution_chksumserver" == "$chksum_s" ]]; then
+							#TODO check return code!
+							copy_data $conflict $GR_LOCALROOT $GR_SERVERROOT
+						else 
+							echo "chksum mismatch for solution";
+
+						fi #chksum match
+						;;
+						DELETE_SERVER)
+						echo "changed both places, dont delete server!" 1>&2;
+						exit 1;
+						;;
+						COPY_TO_LOCAL)
+						if [[ "$solution_chksumserver" == "$chksum_s" && "$solution_chksumlocal" == "$chksum_c" ]]; then 
+							#TODO check return code!
+							copy_data $conflict  $GR_SERVERROOT $GR_LOCALROOT
+						else 
+							echo "chksum mismatch for solution";
+
+						fi #chksum match
+
+						;;
+						DELETE_LOCAL)
+						echo "changed both places, dont delete local!" 1>&2;
+						exit 1
+						;;
+						*)
+						echo "Unknown action: [$solution_action]";
+						exit 1
+					esac
+
+				else
+					set_conflict_state  "$conflict\nFILE_CHANGED_BOTH\n$chksum_c\n$chksum_s";
+					#give user the choice between copying or delete
+				fi;
+
+
+				#kij#					solve_conflict "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT"
+				#either a merging or copying of files has taken place
+				#in any case we can update database
+				#					calculate_file "$GR_LOCALROOT$conflict"
+				#					echo calculate_file "$GR_LOCALROOT" "$conflict" 1>&2 ;
+				#delete entry from server_conflicts after resolved conflict
+				#					server_conflicts=`echo "$server_conflicts" | grep -P -v "^$conflict\$"`;
+				#					echo echo "$server_conflicts" | grep -P -v "^$conflict\$" 1>&2 ;
+			else #file only changed locally only
+				echo "$conflict: FILE CHANGED LOCALLY ONLY -- COPY TO SERVER" 1>&2 ;
+				#copy file to server
+				copy_data "$conflict" "$GR_LOCALROOT" "$GR_SERVER:$GR_SERVERROOT"
+				#delete entry from server_conflicts, since conflict is solved
+				server_conflicts=`echo "$server_conflicts" | grep -P -v "^$conflict\$"`;
+				#update database accordingly
+				calculate_file "$GR_LOCALROOT$conflict";
+			fi;
+		else #file unchanged locally
+			echo "$conflict: FILE CHANGED ON SERVER -- COPY TO LOCAL" 1>&2 ;
+			#implied from the diff that it must be changed on server then
+			#copy from server to local
+			copy_data "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT"
+			#delete entry from server_conflicts, since conflict is solved
+			server_conflicts=`echo "$server_conflicts" | grep -P -v "^$conflict\$"`;
+
+			#update database accordingly
+			calculate_file "$GR_LOCALROOT$conflict"
 		fi;
-		#Delete all sub-entries with dir from client_conflicts, since we solved all
-		#conflicts with those by either copy, delete or manually
-		client_conflicts=`echo "$client_conflicts" | grep -P -v "^$conflict"`;
-	else #it is a file
-		#if file conflicts on both lists, it means it exists, but have been 
-		#changed one or both places
-		if echo "$server_conflicts" | grep -q $conflict; then
-			#file exists in both places
-			#check if file has changed
+	else #file exists on local, not on server
+		#check if file existed on last sync
+		file_existed "$GR_LOCALROOT$conflict";
+		existed=$?
+		#echo "returned $existed";
+		if [[ $existed == "0" ]]; then
+			echo "$conflict: FILE CREATED LOCALLY -- COPY TO SERVER" 1>&2;
+			#file did not exist on last sync, must have been created locally
+			#copy to server
+			copy_data "$conflict" "$GR_LOCALROOT" "$GR_SERVER:$GR_SERVERROOT";
+			#update database with the new dir
+			calculate_file "$GR_LOCALROOT$conflict";	
+		else #file deleted on server
+			#check if it has changed locally
 			has_changed_locally "$GR_LOCALROOT$conflict";
 			changed=$?;
 			if [[ $changed == "1" ]]; then
-				#file changed locally
-				has_file_changed_remotely "$GR_LOCALROOT$conflict" "$GR_SERVER" "$GR_SERVERROOT$conflict";
-				remote_changed=$?;
-				if [[ $remote_changed == "1" ]]; then
-					#file also changed on server
-					echo "$conflict: FILE CHANGED BOTH LOCALLY AND REMOTELY -- CONFLICT" 1>&2  ;
+				echo "$conflict: FILE DELETED ON SERVER BUT MODIFIED LOCALLY -- CONFLICT" 1>&2 ;
+				#kij#
+				chksum_c=`get_checksum "$GR_LOCALROOT$conflict"`;
+				chksum_s="-"; 
+			
 
-
-					chksum_c=`get_checksum "$GR_LOCALROOT$conflict"`
-					chksum_s=`calc_remote_file_checksum $GR_SERVER "$GR_SERVERROOT$conflict"`
-
-					if [ "$solution_conflict_type" == "FILE_CHANGED_BOTH" ]; then
-						echo "got solution, checking if we got usable solution" 1>&2;
-						#chksums correct? -TODO we overwriting/deleting without mutex
-						#chk chksum for the file/dir to be deleted
-						case "$solution_action" in
-							COPY_TO_SERVER)
-							echo "copying $GR_LOCALROOT$conflict to server" 1>&2;
-							#chksum match?
-							if [[ "$solution_chksumlocal" == "$chksum_c" && "$solution_chksumserver" == "$chksum_s" ]]; then
-								#TODO check return code!
-								copy_data $conflict $GR_LOCALROOT $GR_SERVERROOT
-							else 
-								echo "chksum mismatch for solution";
-
-							fi #chksum match
-							;;
-							DELETE_SERVER)
-							echo "changed both places, dont delete server!" 1>&2;
+				if [ "$solution_conflict_type" == "FILE_DELETED_SERVER_CHANGED_LOCAL" ]; then
+					echo "got solution, checking if we got usable solution" 1>&2;
+					#chksums correct? -TODO we overwriting/deleting without mutex
+					#chk chksum for the file/dir to be deleted
+					case "$solution_action" in
+						COPY_TO_SERVER)
+						echo "copying $GR_LOCALROOT$conflict to server" 1>&2;
+						#chksum match?
+						if [ $solution_chksumlocal == $chksum_c ]; then 
+							#TODO check return code!
+							copy_data $conflict $GR_LOCALROOT $GR_SERVERROOT
+						else 
+							echo "chksum mismatch for solution" 1>&2;
 							exit 1;
-							;;
-							COPY_TO_LOCAL)
-							if [[ "$solution_chksumserver" == "$chksum_s" && "$solution_chksumlocal" == "$chksum_c" ]]; then 
-								#TODO check return code!
-								copy_data $conflict  $GR_SERVERROOT $GR_LOCALROOT
-							else 
-								echo "chksum mismatch for solution";
+						fi #chksum match
+						;;
+						DELETE_SERVER)
+						echo "File already deleted on server!" 1>&2;
+						exit 1;
+						;;
+						COPY_TO_LOCAL)
+						echo "File already deleted on server!" 1>&2;
+						exit 1;
+						;;
+						DELETE_LOCAL)
 
-							fi #chksum match
-
-							;;
-							DELETE_LOCAL)
-							echo "changed both places, dont delete local!" 1>&2;
-							exit 1
-							;;
-							*)
-							echo "Unknown action: [$solution_action]";
-							exit 1
-						esac
-
-					else
-						set_conflict_state  "$conflict\nFILE_CHANGED_BOTH\n$chksum_c\n$chksum_s";
-						#give user the choice between copying or delete
-					fi;
-
-
-					#kij#					solve_conflict "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT"
-					#either a merging or copying of files has taken place
-					#in any case we can update database
-					#					calculate_file "$GR_LOCALROOT$conflict"
-					#					echo calculate_file "$GR_LOCALROOT" "$conflict" 1>&2 ;
-					#delete entry from server_conflicts after resolved conflict
-					#					server_conflicts=`echo "$server_conflicts" | grep -P -v "^$conflict\$"`;
-					#					echo echo "$server_conflicts" | grep -P -v "^$conflict\$" 1>&2 ;
-				else #file only changed locally only
-					echo "$conflict: FILE CHANGED LOCALLY ONLY -- COPY TO SERVER" 1>&2 ;
-					#copy file to server
-					copy_data "$conflict" "$GR_LOCALROOT" "$GR_SERVER:$GR_SERVERROOT"
-					#delete entry from server_conflicts, since conflict is solved
-					server_conflicts=`echo "$server_conflicts" | grep -P -v "^$conflict\$"`;
-					#update database accordingly
-					calculate_file "$GR_LOCALROOT$conflict";
-				fi;
-			else #file unchanged locally
-				echo "$conflict: FILE CHANGED ON SERVER -- COPY TO LOCAL" 1>&2 ;
-				#implied from the diff that it must be changed on server then
-				#copy from server to local
-				copy_data "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT"
-				#delete entry from server_conflicts, since conflict is solved
-				server_conflicts=`echo "$server_conflicts" | grep -P -v "^$conflict\$"`;
-
-				#update database accordingly
-				calculate_file "$GR_LOCALROOT$conflict"
-			fi;
-		else #file exists on local, not on server
-			#check if file existed on last sync
-			file_existed "$GR_LOCALROOT$conflict";
-			existed=$?
-			#echo "returned $existed";
-			if [[ $existed == "0" ]]; then
-				echo "$conflict: FILE CREATED LOCALLY -- COPY TO SERVER" 1>&2;
-				#file did not exist on last sync, must have been created locally
-				#copy to server
-				copy_data "$conflict" "$GR_LOCALROOT" "$GR_SERVER:$GR_SERVERROOT";
-				#update database with the new dir
-				calculate_file "$GR_LOCALROOT$conflict";	
-			else #file deleted on server
-				#check if it has changed locally
-				has_changed_locally "$GR_LOCALROOT$conflict";
-				changed=$?;
-				if [[ $changed == "1" ]]; then
-					echo "$conflict: FILE DELETED ON SERVER BUT MODIFIED LOCALLY -- CONFLICT" 1>&2 ;
-					#kij#
-					chksum_c=`get_checksum "$GR_LOCALROOT$conflict"`;
-					chksum_s="-"; 
-
-
-					if [ "$solution_conflict_type" == "FILE_DELETED_SERVER_CHANGED_LOCAL" ]; then
-						echo "got solution, checking if we got usable solution" 1>&2;
-						#chksums correct? -TODO we overwriting/deleting without mutex
-						#chk chksum for the file/dir to be deleted
-						case "$solution_action" in
-							COPY_TO_SERVER)
-							echo "copying $GR_LOCALROOT$conflict to server" 1>&2;
-							#chksum match?
-							if [ $solution_chksumlocal == $chksum_c ]; then 
-								#TODO check return code!
-								copy_data $conflict $GR_LOCALROOT $GR_SERVERROOT
-							else 
-								echo "chksum mismatch for solution" 1>&2;
-								exit 1;
-							fi #chksum match
-							;;
-							DELETE_SERVER)
-							echo "File already deleted on server!" 1>&2;
+						if [ $chksum_c == $solution_chksumlocal ]; then
+							echo "deleting local file: $GR_LOCALROOT$conflict" 1>&2;
+							delete_data $conflict $GR_LOCALROOT;
+						else
+							echo "chksum mismatch for solution" 1>&2;
 							exit 1;
-							;;
-							COPY_TO_LOCAL)
-							echo "File already deleted on server!" 1>&2;
-							exit 1;
-							;;
-							DELETE_LOCAL)
+						fi #chksum valid
+						;;
+						*)
+						echo "Unknown action: [$solution_action]" 1>&2;
+						exit 1
+					esac
 
-							if [ $chksum_c == $solution_chksumlocal ]; then
-								echo "deleting local file: $GR_LOCALROOT$conflict" 1>&2;
-								delete_data $conflict $GR_LOCALROOT;
-							else
-								echo "chksum mismatch for solution" 1>&2;
-								exit 1;
-							fi #chksum valid
-							;;
-							*)
-							echo "Unknown action: [$solution_action]" 1>&2;
-							exit 1
-						esac
+				else
+					set_conflict_state  "$conflict\nFILE_DELETED_SERVER_CHANGED_LOCAL\n$chksum_c\n$chksum_s";
+					#give user the choice between copying or delete
+				fi
 
-					else
-						set_conflict_state  "$conflict\nFILE_DELETED_SERVER_CHANGED_LOCAL\n$chksum_c\n$chksum_s";
-						#give user the choice between copying or delete
-					fi
-
-					#file deleted on server, but modified locally
-					#					 solve_file_deleted_but_changed_locally "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT";
-				else #file deleted on server, untouched locally
-					echo "$conflict: FILE DELETED ON SERVER -- DELETE LOCALLY" 1>&2;
-					#else dir deleted on server and unchanged locally
-					delete_data "$conflict" "$GR_LOCALROOT"
-					#update database
-					delete_file_entry "$GR_LOCALROOT$conflict";
-				fi;
+				#file deleted on server, but modified locally
+				#					 solve_file_deleted_but_changed_locally "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT";
+			else #file deleted on server, untouched locally
+				echo "$conflict: FILE DELETED ON SERVER -- DELETE LOCALLY" 1>&2;
+				#else dir deleted on server and unchanged locally
+				delete_data "$conflict" "$GR_LOCALROOT"
+				#update database
+				delete_file_entry "$GR_LOCALROOT$conflict";
 			fi;
 		fi;
-	fi; #checking for dir vs file;
+	fi;
+fi; #checking for dir vs file;
 done; #end of loop through conflicts
-
-
 
 while [ `echo $server_conflicts | wc -w` != 0 ]; do
 	tree *root 1>&2;

@@ -1,9 +1,10 @@
 #grimrepo configfile
 
 ##### LOCAL SETTING ######
+export GR_REPONAME=myrepo
+
 #server which will contain repository
 export GR_SERVER=`whoami`@localhost;
-#protocol
 
 #rootdirectory for server -- must have trailing slash
 export GR_SERVERROOT=`pwd`/serverroot/
@@ -17,13 +18,13 @@ export GR_LOCALROOT=`pwd`/localroot/
 
 ##### GLOBAL SETTINGS ######
 #metadata
-export GR_INDEX=`pwd`/.grimrepo
+export GR_INDEX=/home/kasper/.grimrepo
 #export GR_INDEX=/media/documents/synced/projects/.grimrepo
 
 #timespan for each log (seconds)
 export GR_LOG_TIME=10
 
 #setup path to files
-export GR_PATH=`pwd`
+export GR_PATH=/home/kasper/grimrepo
 
 #rsync options

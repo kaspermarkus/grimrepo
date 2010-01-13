@@ -26,9 +26,9 @@ source "$GR_PATH/text_ui/gr_constants.sh";
 #
 # $1 - The string presented in the header
 function solve_all {
-
 	#sync, and get the newest conflict:
 	local conflict=`bash $GR_PATH/text_ui/gr_autosync.sh`;
+	echo textui/gr_solve.sh/solve_all recieved conflict: $conflict 1>&2;
 	solve_conflict "$conflict";
 	local returned=$?;
 	#while [[ $conflict != "" ]]; do
@@ -36,7 +36,7 @@ function solve_all {
 	#	conflict=`${text_ui_base}gr_autosync.sh`;
 		#if a conflict exists, solve it:
 	#	if [[ $conflict != "" ]]; then
-			printf "$conflict\n${ACTIONS[$returned]}\n"; 
+	repo_sync.sh -s "$conflict\n${ACTIONS[$returned]}\n"; 
 			#echo `solve_conflict "$conflict"`;
 	#	fi;
 	#done;
@@ -57,7 +57,7 @@ function solve_conflict {
 	local md5local=`printf "$conflictstring" | head -n 3 | tail -n 1`
 	local md5server=`printf "$conflictstring" | head -n 4 | tail -n 1`
 	local returned;
-	echo "solve_conflict recieved package: $conflict_type $filename $md5local $md5server" >&2;
+	echo "solve_conflict recieved package: $filename $conflict_type $md5local $md5server" 1>&2;
 	
 	#figure out what conflict it is, and send it to the correct location
 	if [[ $conflict_type == "DIR_DELETED_SERVER_CHANGED_LOCAL" ]]; then
@@ -68,25 +68,14 @@ function solve_conflict {
 		solve_dir_deleted_but_changed_on_server "$filename";
 		returned=$?;
 	fi;
+	if [[ $conflict_type == "FILE_DELETED_SERVER_CHANGED_LOCAL" ]]; then
+		solve_file_deleted_but_changed_locally "$filename";
+		returned=$?;
+	fi;
+	if [[ $conflict_type == "FILE_DELETED_LOCAL_CHANGED_SERVER" ]]; then
+		solve_file_deleted_but_changed_on_server "$filename";
+		returned=$?;
+	fi;
 	return $returned;
 }
-
-##
-# $1 - file: the conflicting file
-# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
-# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
-#function solve_file_deleted_but_changed_locally {
-##
-
-####
-# $1 - file: the conflicting file
-# $2 - serverroot: the root of the server (in the form user@server:serverpath/)
-# $3 - localroot: the root of the local (eg. /root/to/local/repo/)
-#function solve_file_deleted_but_changed_on_server {
-#
-#
-# $1 - the filename 
-# $2 - server root (in the form user@location:/path/to/file
-# $2 - local root 
-#function solve_conflict {
 
