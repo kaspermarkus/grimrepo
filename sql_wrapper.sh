@@ -28,7 +28,7 @@ tablename="checksums";
 # Usefull when testing the program, needing to clear
 # database and set up a testcase
 function clear_database {
-	rm -i  $databasename;
+	rm $sql_wrapper_rm_flag $databasename;
 }
 
 ####
