@@ -195,7 +195,6 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 				fi
 
 		else #$changed == "0" -- not changed locally
-			>>>>>>> text_ui
 			echo "$conflict: DELETED ON SERVER, UNCHANGED LOCALLY - DELETE FROM LOCAL" 1>&2 ;
 			#else dir deleted on server and unchanged locally
 			delete_data "$conflict" "$GR_LOCALROOT"
