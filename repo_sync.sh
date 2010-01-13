@@ -43,18 +43,19 @@ done
 #do we have any solutions?1
 if [ ! -z "$conflictsolution" ]; then
 
-    echo "got solving answer: $conflictsolution" 1>&2;
+	echo "got solving answer: $conflictsolution" 1>&2;
 	solution_filename=`printf "$conflictsolution" 	   | head -n 1 | tail -n 1`
 	solution_conflict_type=`printf "$conflictsolution" | head -n 2 | tail -n 1`
 	solution_chksumlocal=`printf "$conflictsolution"  	   | head -n 3 | tail -n 1`
 	solution_chksumserver=`printf "$conflictsolution" 	   | head -n 4 | tail -n 1`
 	solution_action=`printf "$conflictsolution" 	   | head -n 5 | tail -n 1`	
 
-	echo solution_filename $solution_filename
-	echo solution conflict_type $solution_conflict_type
-	echo solution_chksumlocal $solution_chksumlocal
-	echo solution_chksumserver $solution_chksumserver
-	echo solution_action $solution_action
+	echo solution_filename $solution_filename 1>&2
+	echo solution conflict_type $solution_conflict_type 1>&2
+	echo solution_chksumlocal $solution_chksumlocal  1>&2
+	echo solution_chksumserver $solution_chksumserver 1>&2
+	echo solution_action $solution_action 1>&2
+
 
 
 	if [ ! -z $solution_action ]; then
@@ -80,23 +81,21 @@ fi
 #we only solve one at the time.  
 #so if allready set, we exit
 function set_conflict_state {
-    	echo set_conflict_state  1>&2;
-	if [ ! -z $returnconflict ]; then
-		#if $returnconflict exists and length > 0
-		echo 'one conflict already detected, lets solve it first' 1>&2;
-		#returnconflict=$1
-		#exit 0;
-	else
-		#else set $return conflict
-		returnconflict=$1
-		#exit 0	
-	fi
+if [ ! -z $returnconflict ]; then
+	#if $returnconflict exists and length > 0
+	echo 'one conflict already detected, lets solve it first' 1>&2;
+	#returnconflict=$1
+	#exit 0;
+else
+	#else set $return conflict
+	returnconflict=$1
+	#exit 0	
+fi
 
 }
 
 #return conflict parameteres to the caller
 function get_conflict_state {
-	echo 'evaluated string' 1>&2;
 	echo -e $returnconflict
 }
 
@@ -120,7 +119,7 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 	conflict=`echo "$client_conflicts" | head -n 1`
 	#then remove that line from client_conflicts
 	client_conflicts=`echo "$client_conflicts" | tail --lines=+2`;
-    	#echo "next conflict=$conflict";
+	#echo "next conflict=$conflict";
 
 	#if it is a directory (which can be identified by the trailing '/')
 	if echo $conflict | grep -q -P '/$'; then
@@ -147,9 +146,8 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 				chksum_c=`get_checksum "$GR_LOCALROOT$conflict"`
 				chksum_s="-";  #invalid?  - file deleted
 				#if we got solution, and is it useable.  use it.  else set conflictstate
-				#echo "------"
-				#echo "solution type: $solution_conflict_type";
-				#echo "current state: $current_t";
+				echo "solution type: $solution_conflict_type" 1>&2;
+				echo "current state: $current_t" 1>&2;
 
 				if [ "$solution_conflict_type" == "DIR_DELETED_SERVER_CHANGED_LOCAL" ]; then
 					echo "got solution, checking if we got usable solution" 1>&2;
@@ -164,6 +162,7 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 							copy_data $conflict $GR_LOCALROOT $GR_SERVERROOT
 						else 
 							echo "chksum mismatch for solution";
+							exit 1
 
 						fi #chksum match
 						;;
@@ -182,15 +181,16 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 							delete_data $conflict $GR_LOCALROOT;
 						else
 							echo "chksum mismatch for solution";
+							exit 1
 						fi #chksum valid
 						;;
 						*)
 						echo "Unknown action: [$solution_action]";
 						exit 1
 					esac
-
-				else #solution_conflict_type not set, eg. user has not set an action for conflict
+				else
 					set_conflict_state  "$conflict\nDIR_DELETED_SERVER_CHANGED_LOCAL\n$chksum_c\n$chksum_s";
+					#give user the choice between copying or delete
 				fi
 
 			else #$changed == "0" -- not changed locally
@@ -219,11 +219,52 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 				if [[ $remote_changed == "1" ]]; then
 					#file also changed on server
 					echo "$conflict: FILE CHANGED BOTH LOCALLY AND REMOTELY -- CONFLICT" 1>&2  ;
-
 					chksum_c=`get_checksum "$GR_LOCALROOT$conflict"`
-					chksum_s=`get_checksum "$GR_SERVERROOT$conflict"`
-					set_conflict_state  "$conflict\nFILE_CHANGED_BOTH\n$chksum_c\n$chksum_s";
+					chksum_s=`calc_remote_file_checksum $GR_SERVER "$GR_SERVERROOT$conflict"`
 
+					if [ "$solution_conflict_type" == "FILE_CHANGED_BOTH" ]; then
+						echo "got solution, checking if we got usable solution" 1>&2;
+						#chksums correct? -TODO we overwriting/deleting without mutex
+						#chk chksum for the file/dir to be deleted
+						case "$solution_action" in
+							COPY_TO_SERVER)
+							echo "copying $GR_LOCALROOT$conflict to server" 1>&2;
+							#chksum match?
+							if [[ "$solution_chksumlocal" == "$chksum_c" && "$solution_chksumserver" == "$chksum_s" ]]; then
+								#TODO check return code!
+								copy_data $conflict $GR_LOCALROOT $GR_SERVERROOT
+							else 
+								echo "chksum mismatch for solution";
+
+							fi #chksum match
+							;;
+							DELETE_SERVER)
+							echo "changed both places, dont delete server!" 1>&2;
+							exit 1;
+							;;
+							COPY_TO_LOCAL)
+							if [[ "$solution_chksumserver" == "$chksum_s" && "$solution_chksumlocal" == "$chksum_c" ]]; then 
+								#TODO check return code!
+								copy_data $conflict  $GR_SERVERROOT $GR_LOCALROOT
+							else 
+								echo "chksum mismatch for solution";
+
+							fi #chksum match
+
+							;;
+							DELETE_LOCAL)
+							echo "changed both places, dont delete local!" 1>&2;
+							exit 1
+							;;
+							*)
+							echo "Unknown action: [$solution_action]";
+							exit 1
+						esac
+
+					else
+						set_conflict_state  "$conflict\nFILE_CHANGED_BOTH\n$chksum_c\n$chksum_s";
+						#give user the choice between copying or delete
+					fi;
 					#kij#					solve_conflict "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT"
 					#either a merging or copying of files has taken place
 					#in any case we can update database
@@ -273,11 +314,50 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 					#kij#
 					chksum_c=`get_checksum "$GR_LOCALROOT$conflict"`;
 					chksum_s="-"; 
-					set_conflict_state  "$conflict\nFILE_DELETED_SERVER_CHANGED_LOCAL\n$chksum_c\n$chksum_s";
 
+					if [ "$solution_conflict_type" == "FILE_DELETED_SERVER_CHANGED_LOCAL" ]; then
+						echo "got solution, checking if we got usable solution" 1>&2;
+						#chksums correct? -TODO we overwriting/deleting without mutex
+						#chk chksum for the file/dir to be deleted
+						case "$solution_action" in
+							COPY_TO_SERVER)
+							echo "copying $GR_LOCALROOT$conflict to server" 1>&2;
+							#chksum match?
+							if [ $solution_chksumlocal == $chksum_c ]; then 
+								#TODO check return code!
+								copy_data $conflict $GR_LOCALROOT $GR_SERVERROOT
+							else 
+								echo "chksum mismatch for solution" 1>&2;
+								exit 1;
+							fi #chksum match
+							;;
+							DELETE_SERVER)
+							echo "File already deleted on server!" 1>&2;
+							exit 1;
+							;;
+							COPY_TO_LOCAL)
+							echo "File already deleted on server!" 1>&2;
+							exit 1;
+							;;
+							DELETE_LOCAL)
 
+							if [ $chksum_c == $solution_chksumlocal ]; then
+								echo "deleting local file: $GR_LOCALROOT$conflict" 1>&2;
+								delete_data $conflict $GR_LOCALROOT;
+							else
+								echo "chksum mismatch for solution" 1>&2;
+								exit 1;
+							fi #chksum valid
+							;;
+							*)
+							echo "Unknown action: [$solution_action]" 1>&2;
+							exit 1
+						esac
 
-
+					else
+						set_conflict_state  "$conflict\nFILE_DELETED_SERVER_CHANGED_LOCAL\n$chksum_c\n$chksum_s";
+						#give user the choice between copying or delete
+					fi
 
 					#file deleted on server, but modified locally
 					#					 solve_file_deleted_but_changed_locally "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT";
@@ -359,8 +439,50 @@ while [ `echo $server_conflicts | wc -w` != 0 ]; do
 				echo "$conflict: FILE DELETED ON LOCALLY BUT MODIFIED ON SERVER -- CONFLICT" 1>&2;
 				#kij#
 				chksum_c="-";
-				chksum_s=`get_checksum "$GR_SERVERROOT$conflict"`;
-				set_conflict_state  "$conflict\nFILE_DELETED_LOCAL_CHANGED_SERVER\n$chksum_c\n$chksum_s";
+				chksum_s=`calc_remote_file_checksum $GR_SERVER "$GR_SERVERROOT$conflict"`
+
+				if [ "$solution_conflict_type" == "FILE_DELETED_LOCAL_CHANGED_SERVER" ]; then
+					echo "got solution, checking if we got usable solution" 1>&2;
+					#chksums correct? -TODO we overwriting/deleting without mutex
+					#chk chksum for the file/dir to be deleted
+					case "$solution_action" in
+						COPY_TO_SERVER)
+						echo "File already deleted local!" 1>&2;
+						exit 1;
+						;;
+						DELETE_SERVER)
+						if [ $chksum_s == $solution_chksumserver ]; then
+							echo "deleting server file: $GR_SERVERROOT$conflict" 1>&2;
+							delete_data $conflict $GR_SERVERROOT;
+						else
+							echo "chksum mismatch for solution" 1>&2;
+							exit 1;
+						fi #chksum valid
+						;;
+						COPY_TO_LOCAL)
+						echo "copying $GR_SERVERROOT$conflict to local" 1>&2;
+						#chksum match?
+						if [ $solution_chksumserver == $chksum_s ]; then 
+							#TODO check return code!
+							copy_data $conflict $GR_SERVERROOT $GR_LOCALROOT
+						else 
+							echo "chksum mismatch for solution" 1>&2;
+							exit 1;
+						fi #chksum match
+						;;
+						DELETE_LOCAL)
+						echo "File already deleted local!" 1>&2;
+						exit 1;
+						;;
+						*)
+						echo "Unknown action: [$solution_action]" 1>&2;
+						exit 1
+					esac
+
+				else
+					set_conflict_state  "$conflict\nFILE_DELETED_LOCAL_CHANGED_SERVER\n$chksum_c\n$chksum_s";
+					#give user the choice between copying or delete
+				fi
 
 				#solve_file_deleted_but_changed_on_server  "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT";
 			else #file deleted on on local machine, untouched on server
