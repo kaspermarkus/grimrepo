@@ -28,12 +28,12 @@ function copy_data {
 	from=$2;
 	to=$3;
 
-	res=`rsync -vrlpts "$from$file" "$to$file"`;
 	echo rsync -vrlpts "$from$file" "$to$file";
-	echo "returned $res";
+	res=`rsync -vrlpts "$from$file" "$to$file"`;
 	if [ $? -ne 0 ]; then 
 		return 53;
 	fi;		
+	echo "returned $res";
 }
 
 ####
@@ -49,7 +49,8 @@ function delete_data {
 
 	#check if we are trying to delete something remote
 	is_remote "$root$file"; 
-	if [ $? -eq "1" ]; then 
+	returned=$?
+	if [ $returned -eq "1" ]; then 
 		#get the path part of the ssh/path syntax
 		serverroot=`echo "$root" | sed s#^[^:]*:##`
 		#and then get the login/server part for the ssh statement
@@ -61,7 +62,7 @@ function delete_data {
 		rm -rf "$root$file";
 	fi;
 	
-	if [ $? -ne 0 ]; then 
+	if [ $returned -ne 0 ]; then 
 		return 63;
 	fi;		
 }

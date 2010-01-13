@@ -76,6 +76,10 @@ function solve_conflict {
 		solve_file_deleted_but_changed_on_server "$filename";
 		returned=$?;
 	fi;
+	if [[ $conflict_type == "FILE_CHANGED_BOTH" ]]; then
+		solve_conflicting_files "$filename";
+		returned=$?;
+	fi;
 	return $returned;
 }
 

@@ -96,7 +96,7 @@ fi
 
 #return conflict parameteres to the caller
 function get_conflict_state {
-echo -e $returnconflict
+	echo -e $returnconflict
 }
 
 
@@ -188,7 +188,6 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 						echo "Unknown action: [$solution_action]";
 						exit 1
 					esac
-
 				else #solution_conflict_type not set, eg. user has not set an action for conflict
 					set_conflict_state  "$conflict\nDIR_DELETED_SERVER_CHANGED_LOCAL\n$chksum_c\n$chksum_s";
 					#give user the choice between copying or delete
@@ -220,8 +219,6 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 				if [[ $remote_changed == "1" ]]; then
 					#file also changed on server
 					echo "$conflict: FILE CHANGED BOTH LOCALLY AND REMOTELY -- CONFLICT" 1>&2  ;
-
-
 					chksum_c=`get_checksum "$GR_LOCALROOT$conflict"`
 					chksum_s=`calc_remote_file_checksum $GR_SERVER "$GR_SERVERROOT$conflict"`
 
@@ -268,8 +265,6 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 						set_conflict_state  "$conflict\nFILE_CHANGED_BOTH\n$chksum_c\n$chksum_s";
 						#give user the choice between copying or delete
 					fi;
-
-
 					#kij#					solve_conflict "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT"
 					#either a merging or copying of files has taken place
 					#in any case we can update database
@@ -319,7 +314,6 @@ while [ `echo $client_conflicts | wc -w` != 0 ]; do
 					#kij#
 					chksum_c=`get_checksum "$GR_LOCALROOT$conflict"`;
 					chksum_s="-"; 
-
 
 					if [ "$solution_conflict_type" == "FILE_DELETED_SERVER_CHANGED_LOCAL" ]; then
 						echo "got solution, checking if we got usable solution" 1>&2;
@@ -468,11 +462,6 @@ while [ `echo $server_conflicts | wc -w` != 0 ]; do
 				solve_dir_deleted_but_changed_on_server "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT";
 			else
 				echo "$conflict: DELETED ON LOCAL, UNCHANGED ON SERVER - DELETE FROM SERVER" 1>&2;
-
-
-
-
-				XXX
 				#else dir deleted on local machine and unchanged server
 				#delete the data from server also
 				delete_data "$conflict" "$GR_SERVER:$GR_SERVERROOT"
@@ -507,7 +496,6 @@ while [ `echo $server_conflicts | wc -w` != 0 ]; do
 				#kij#
 				chksum_c="-";
 				chksum_s=`calc_remote_file_checksum $GR_SERVER "$GR_SERVERROOT$conflict"`
-
 
 				if [ "$solution_conflict_type" == "FILE_DELETED_LOCAL_CHANGED_SERVER" ]; then
 					echo "got solution, checking if we got usable solution" 1>&2;

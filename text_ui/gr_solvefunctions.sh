@@ -189,23 +189,25 @@ function solve_file_deleted_but_changed_on_server {
 # the result will be propagated to both server and client
 #
 # $1 - the filename 
-function solve_conflict {
+function solve_conflicting_files {
+	local localroot="$GR_LOCALROOT";
+	
 	#fix parameters to make sence
 	file=$1;
-
+	echo "solve conflicting_files";
 	#if there is a conflict file exists on both server
 	#and client, so we can safely check client file.
         
 	#TEXT: file is not binary if file command ends with empty
 	#or text
-	echo file "$localroot$file" pipe grep -q -P "(empty|text)$"; 
+	echo file "$localroot$file" | grep -q -P "(empty|text)$"; 
 	if file "$localroot$file" | grep -q -P "(empty|text)$"; then 
-		solve_text_conflict "$file"
+		solve_conflicting_text_files "$file"
 		return $?;
 	else
 	#BINARY: no merging possible, either sync from server
 	#or client, depending on user choice:
-		solve_binary_conflict "$file"
+		solve_conflicting_binary_files "$file"
 		return $?;
 	fi;
 }
@@ -214,12 +216,10 @@ function solve_conflict {
 # Solve a conflict between two binary files.
 #
 # $1 - the file in question
-# $2 - serverroot (in the form user@location:/path/to/file 
-# $3 - localroot
-function solve_binary_conflict {
-	file=$1;
-	serverroot=$2;
-	localroot=$3
+function solve_conflicting_binary_files {
+	local file=$1;
+	local serverroot="$GR_SERVER:$GR_SERVERROOT";
+	local localroot="$GR_LOCALROOT";
 
 	#echo sync only $file;
 	#present a menu
@@ -232,23 +232,23 @@ function solve_binary_conflict {
 	
 	#if user chooses to copy from server to client:
 	if [ $choice -eq "1" ]; then
-		copy_data "$file" "$serverroot" "$localroot"; 
+		return $COPY_TO_LOCAL
 	else 
 		if [ $choice -eq "2" ]; then 
 			#user chooses to copy from client to server
-			copy_data "$file" "$localroot" "$serverroot"; 
+			return $COPY_TO_SERVER
 		else
 			if [ $choice -eq "3" ]; then 
 				#usr choose to view local file info;
-				print_local_file_info "$file" "$localroot"
-				solve_binary_conflict "$file" "$serverroot" "$localroot";
+				print_local_file_info "$file"
+				solve_conflicting_binary_files "$file"
 				return $?
 			fi;
 			if [ $choice -eq "4" ]; then
 				#usr chooses to view server file info;
 				echo print_remote_file_info "$serverroot" "$file";
 				print_remote_file_info "$serverroot" "$file";
-				solve_binary_conflict "$file" "$serverroot" "$localroot";
+				solve_conflicting_binary_files "$file"
 				return $?
 			fi;
 		fi;
@@ -261,12 +261,10 @@ function solve_binary_conflict {
 # and tmpfile with some program (depending on on UI).
 #
 # $1 - the conflicting filename
-# $2 - serverroot: the serverroot (in the form user@server:/path/to/root/)
-# $3 - localroot: the local root 
-function solve_text_conflict {
-	file=$1;
-	serverroot=$2;
-	localroot=$3;
+function solve_conflicting_text_files {
+	local file=$1;
+	local serverroot="$GR_SERVER:$GR_SERVERROOT";
+	local localroot="$GR_LOCALROOT";
 	
 	#print menu to user:
 	solve_text_conflict_menu $file;
@@ -279,26 +277,27 @@ function solve_text_conflict {
 	
 	#if user chooses to copy from server to client:
 	if [ $choice -eq "1" ]; then
-		copy_data "$file" "$serverroot" "$localroot"; 
+		return $COPY_TO_LOCAL;
 	else 
 		if [ $choice -eq "2" ]; then 
 			#user chooses to copy from client to server
-			copy_data "$file" "$localroot" "$serverroot"; 
+			return $COPY_TO_SERVER;
 		else
 			if [ $choice -eq "3" ]; then
-				merge_text_files "$file" "$serverroot" "$localroot";
+				merge_text_files "$file"
+				return $?;
 			else 
 				if [ $choice -eq "4" ]; then 
 					#usr choose to view local file info;
 					echo print_local_file_info "$file" "$localroot"
 					print_local_file_info "$file" "$localroot"
-					solve_text_conflict "$file" "$serverroot" "$localroot";
+					solve_conflicting_text_files "$file"
 					return $?
 				fi;
 				if [ $choice -eq "5" ]; then
 					#usr chooses to view server file info;
 					print_remote_file_info "$serverroot" "$file";
-					solve_text_conflict "$file" "$serverroot" "$localroot";
+					solve_conflicting_text_files "$file" 
 					return $?
 				fi;
 			fi;
@@ -315,12 +314,10 @@ function solve_text_conflict {
 # local and server version is overwritten with the tmp file.
 # 
 # $1 - the conflicting filename
-# $2 - serverroot: the serverroot (eg. user@server:/path/to/root)
-# $3 - localroot: the localroot
 function merge_text_files {
-	file=$1;
-	serverroot=$2;
-	localroot=$3;
+	local file=$1;
+	local serverroot="$GR_SERVER:$GR_SERVERROOT";
+	local localroot="$GR_LOCALROOT";
 	#copy version from server to tmp file
 	tmpfile=`mktemp`;
 	#copy serverversion to tmpfile
@@ -333,13 +330,14 @@ function merge_text_files {
 	confirm_merge_text_menu
 	#if user decides to propagate changes, do it:
 	if [ $choice == "1" ]; then
-		#copy to server:
-		rsync -s "$tmpfile" "$serverroot$file";
 		#overwrite local copy
 		cp "$tmpfile" "$localroot$file";
+		#and ask to sync that to server
+		return $COPY_TO_SERVER;
 	else
 		#user choose cancel and quit
-		solve_text_conflict "$file" "$serverroot" "$localroot";
+		solve_conflicting_text_files "$file" 
+		return $?;  
 	fi;	
 }
 
