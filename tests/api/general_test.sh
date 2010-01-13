@@ -38,21 +38,21 @@ echo "bbb" > ${GR_SERVERROOT}A/a1
 
 cat ${GR_LOCALROOT}A/a1
 cat ${GR_SERVERROOT}A/a1
-out=`./repo_sync.sh`
+test_out=`./repo_sync.sh`
 
-test="A/a1
+test_goal="1A/a1
 FILE_CHANGED_BOTH
 d41d8cd98f00b204e9800998ecf8427e
 b8694d27c0f13f22ed3bc610c19ec15"
 
-if [[ "$out"=="$test" ]]; then
-	echo ok
-fi
 
+if [[ "$test_out" == "$test_goal" ]]; then
+	echo ok
+    let SUCCESS=SUCCESS+1
+fi
 
 
 echo "######results######"
 echo "total tests:   $TESTS"
 echo "successes  :   $SUCCESS"
 
-#rm -rf "${GR_SERVERROOT}"C
