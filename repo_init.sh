@@ -25,6 +25,30 @@ source file_info.sh
 source sync_functions.sh
 source repo_bookkeeper.sh
 
+
+####
+##
+## stupid global
+sql_wrapper_rm_flag="-i";
+##
+while getopts ":hd" opt; do
+	case $opt in
+		d)
+		echo "-d was triggered" >&2
+		sql_wrapper_rm_flag=""
+		;;
+		\?)
+		echo "Invalid option: -$OPTARG" >&2
+		exit 1
+		;;
+		h)
+		echo "$0  [-d ] delete sqlite db without asking "
+		exit 0
+	esac
+done
+
+
+
 #run list rsync changes from server to local
 #using head and tail to avoid the garbage info from rsync
 s_to_c=`rsync -vrc -n $GR_SERVER:$GR_SERVERROOT $GR_LOCALROOT | tail --lines=+2 | head --lines=-3`
