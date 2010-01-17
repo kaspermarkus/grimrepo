@@ -20,12 +20,13 @@ set -o nounset  # Treat unset variables as an error
 #source all files with test_* functions in them
 #error if name not uniqe
 
-. metatest/asserts.sh
-test_1
+. text_ui/server_delete_dir_modify_locally.sh
 
-
+test_cancel
+test_copy
+test_delete_confirm
+test_delete_cancel
 
 #print statistics
-
 print_stat
 

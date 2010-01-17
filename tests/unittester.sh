@@ -30,6 +30,7 @@ function assert_equal {
 	if [[ ! "$1" == "$2" ]]; then
 		echo 'fail';
 		return 1;
+	
 	else
 		echo "success"
 		let SUCCESS=SUCCESS+1

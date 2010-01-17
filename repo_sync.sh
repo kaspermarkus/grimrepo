@@ -10,9 +10,9 @@
 #
 ####################################################
 
-. sync_functions.sh
-. repo_bookkeeper.sh
-. sql_wrapper.sh
+source $GR_PATH/sync_functions.sh
+source $GR_PATH/repo_bookkeeper.sh
+source $GR_PATH/sql_wrapper.sh
 
 if [ -f ~/.grimreporc ]; then
 	source ~/.grimreporc
