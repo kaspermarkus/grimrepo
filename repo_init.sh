@@ -20,7 +20,7 @@ else
 fi
 
 #use pure text menus
-source text_ui/text_menus.sh
+source text_ui/gr_textmenus.sh
 source file_info.sh
 source sync_functions.sh
 source repo_bookkeeper.sh

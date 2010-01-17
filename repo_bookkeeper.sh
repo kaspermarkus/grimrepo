@@ -24,7 +24,7 @@ source checksum_wrapper.sh
 function file_existed {
 	file=$1;
 	checksum=`get_checksum "$file"`;
-	echo "cheksum is: $checksum" 1>&2; 
+	#echo "cheksum is: $checksum" 1>&2; 
 	if [[ "$checksum" != "" ]]; then 
 		#echo "1";
 		return 1;
@@ -71,8 +71,8 @@ function has_file_changed_remotely {
 	localfile=$1;
 	serverinfo=$2;
 	remotefile=$3;
-	echo calc_remote_file_checksum "$serverinfo" "$remotefile" 1>&2; 
-	echo get_checksum "$localfile" 1>&2; 
+	#echo calc_remote_file_checksum "$serverinfo" "$remotefile" 1>&2; 
+	#echo get_checksum "$localfile" 1>&2; 
 	#check new checksum vs. old checksum
 	if [[ `calc_remote_file_checksum "$serverinfo" "$remotefile"` != `get_checksum "$localfile"` ]]; then
 		#has changed:
@@ -102,7 +102,7 @@ function has_dir_changed_remotely {
 	local dir=$4;
 	local localroot=$5;
 
-	echo "SERVERROOTdir: $dir on full list: $server_conflicts";
+	#echo "SERVERROOTdir: $dir on full list: $server_conflicts" 1>&2
 	#for each file from serverconflicts that is 
 	#inside dir and is a file (does not end with)
 	local relevant_conflicts=`echo "$server_conflicts" | grep "^$dir" | grep -v -P '/$'`;
@@ -113,7 +113,7 @@ function has_dir_changed_remotely {
 		local conflict=`echo "$relevant_conflicts" | head -n 1`
 		#then remove that line from client_conflicts
 		relevant_conflicts=`echo "$relevant_conflicts" | tail --lines=+2`;
-		echo "next conflict=$conflict";
+		echo "next conflict=$conflict" 1>&2
 		
 		#for each, do a checksum check with remote file vs. checksums
 		has_file_changed_remotely "$localroot$conflict" "$serverinfo" "$serverroot$conflict";

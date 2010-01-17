@@ -404,7 +404,7 @@ while [ `echo $server_conflicts | wc -w` != 0 ]; do
 				echo "$conflict: DELETED ON LOCAL BUT CHANGED ON SERVER" 1>&2;
 				current_t="DIR_DELETED_LOCAL_CHANGED_SERVER"; 
 				chksum_c="-";  #invalid?  - file deleted
-				chksum_s=`calc_remote_file_checksum $GR_SERVER "$GR_SERVERROOT$conflict"`
+				chksum_s=`calc_remote_dir_checksum $GR_SERVER "$GR_SERVERROOT$conflict"`
 				#if we got solution, and is it useable.  use it.  else set conflictstate
 				echo "solution type: $solution_conflict_type" 1>&2;
 				echo "current state: $current_t" 1>&2;
@@ -453,13 +453,6 @@ while [ `echo $server_conflicts | wc -w` != 0 ]; do
 					set_conflict_state  "$conflict\nDIR_DELETED_SERVER_CHANGED_LOCAL\n$chksum_c\n$chksum_s";
 					#give user the choice between copying or delete
 				fi
-
-
-
-
-				#dir deleted on server, but has been changed locally
-				echo "$conflict: DELETED ON LOCAL BUT CHANGED ON SERVER" 1>&2;
-				solve_dir_deleted_but_changed_on_server "$conflict" "$GR_SERVER:$GR_SERVERROOT" "$GR_LOCALROOT";
 			else
 				echo "$conflict: DELETED ON LOCAL, UNCHANGED ON SERVER - DELETE FROM SERVER" 1>&2;
 				#else dir deleted on local machine and unchanged server

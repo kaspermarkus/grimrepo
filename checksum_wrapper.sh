@@ -50,6 +50,23 @@ function calc_remote_file_checksum {
 }
 
 ####
+# calc_remote_dir_checksum
+#
+# Calculates the checksum of the remote dir, given as
+# argument. Argument must be a dir
+#
+# $1 - serverinfo: remote host (eg. user@host.com)
+# $2 - dir: full path to dir
+function calc_remote_dir_checksum {
+	local serverinfo=$1;
+	local file=$2;
+
+	 checksum=`ssh $serverinfo "find \"$file\" -type f -exec md5sum {} \; | md5sum;"`;
+	 echo "${checksum%  *}";
+}
+
+
+####
 # Calculates checksum for dir
 #
 # $1 - path to dir, including dirname
