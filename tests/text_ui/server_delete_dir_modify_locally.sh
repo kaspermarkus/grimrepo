@@ -26,7 +26,7 @@ function test_cancel {
 	expected_localroot=`ls -linR ${GR_LOCALROOT}`
 	expected_serverroot=`ls -linR ${GR_SERVERROOT}`
 	#run sync with cancel as user selection
-	bash "$GR_PATH/text_ui/gr_solve.sh" -p "0"
+	bash "$GR_PATH/text_ui/gr_solve.sh" -p "0" > /dev/null
 	#do asserts	
 	assert_equal "`ls -linR ${GR_LOCALROOT}`" "$expected_localroot" "Checking localroot for changes (there should be none)";
 	assert_equal "`ls -linR ${GR_SERVERROOT}`" "$expected_serverroot" "Checking localroot for changes (there should be none)";
@@ -39,7 +39,7 @@ function test_copy {
 	setup_conflict
 	expected_roots=`cd ${GR_LOCALROOT}; du -a --time .` 
 	#run sync with cancel as user selection
-	bash "$GR_PATH/text_ui/gr_solve.sh" -p "1" 
+	bash "$GR_PATH/text_ui/gr_solve.sh" -p "1" > /dev/null
 	#do asserts	
 	assert_equal "`cd ${GR_LOCALROOT}; du -a --time .`" "$expected_roots" "Checking localroot for changes (there should be none)";
 	assert_equal "`cd ${GR_SERVERROOT}; du -a --time .`" "$expected_roots" "Checking whther serverroot has been updated";
@@ -52,7 +52,7 @@ function test_delete_confirm {
 	setup_conflict
 	expected_roots=`cd ${GR_SERVERROOT}; du -a --time .` 
 	#run sync with cancel as user selection
-	bash "$GR_PATH/text_ui/gr_solve.sh" -p "21" 
+	bash "$GR_PATH/text_ui/gr_solve.sh" -p "21" > /dev/null 
 	#do asserts	
 	assert_equal "`cd ${GR_LOCALROOT}; du -a --time .`" "$expected_roots" "Checking localroot for changes (there should be none)";
 	assert_equal "`cd ${GR_SERVERROOT}; du -a --time .`" "$expected_roots" "Checking whther serverroot has been updated";
@@ -66,7 +66,7 @@ function test_delete_cancel {
 	expected_localroot=`ls -linR ${GR_LOCALROOT}`
 	expected_serverroot=`ls -linR ${GR_SERVERROOT}`
 	#run sync with cancel as user selection
-	bash "$GR_PATH/text_ui/gr_solve.sh" -p "200"
+	bash "$GR_PATH/text_ui/gr_solve.sh" -p "200" > /dev/null
 	#do asserts	
 	assert_equal "`ls -linR ${GR_LOCALROOT}`" "$expected_localroot" "Checking localroot for changes (there should be none)";
 	assert_equal "`ls -linR ${GR_SERVERROOT}`" "$expected_serverroot" "Checking localroot for changes (there should be none)";

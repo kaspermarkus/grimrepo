@@ -12,6 +12,7 @@
 
 source $GR_PATH/sql_wrapper.sh
 source $GR_PATH/checksum_wrapper.sh
+source $GR_PATH/repo_log.sh
 
 ####
 # file_exists
@@ -26,10 +27,8 @@ function file_existed {
 	checksum=`get_checksum "$file"`;
 	#echo "cheksum is: $checksum" 1>&2; 
 	if [[ "$checksum" != "" ]]; then 
-		#echo "1";
 		return 1;
 	else
-		echo "0";
 		return 0;
 	fi; 
 }
@@ -44,15 +43,10 @@ function file_existed {
 # $1 - file: the file to check
 function has_changed_locally {
 	file=$1;
-	#echo calc_checksum "$file";
-	#echo get_checksum "$file";
 	#check new checksum vs. old checksum
 	if [[ `calc_checksum "$file"` != `get_checksum "$file"` ]]; then
-		#has changed:
-		#echo "1";
 		return 1;
 	else 
-		#echo "0"
 		return 0
 	fi; 
 }
@@ -71,8 +65,6 @@ function has_file_changed_remotely {
 	localfile=$1;
 	serverinfo=$2;
 	remotefile=$3;
-	#echo calc_remote_file_checksum "$serverinfo" "$remotefile" 1>&2; 
-	#echo get_checksum "$localfile" 1>&2; 
 	#check new checksum vs. old checksum
 	if [[ `calc_remote_file_checksum "$serverinfo" "$remotefile"` != `get_checksum "$localfile"` ]]; then
 		#has changed:
@@ -113,7 +105,7 @@ function has_dir_changed_remotely {
 		local conflict=`echo "$relevant_conflicts" | head -n 1`
 		#then remove that line from client_conflicts
 		relevant_conflicts=`echo "$relevant_conflicts" | tail --lines=+2`;
-		echo "next conflict=$conflict" 1>&2
+		log 0 "next conflict=$conflict"
 		
 		#for each, do a checksum check with remote file vs. checksums
 		has_file_changed_remotely "$localroot$conflict" "$serverinfo" "$serverroot$conflict";
@@ -162,7 +154,6 @@ function calculate_dir {
 			#if dir, make sure we have trailing slash
 			file=`echo "$file" | sed 's#\([^/]\)$#\1/#'`; 
 		fi;
-		echo FILE "$file";
 		checksum=`calc_checksum "$file"`;
 		set_checksum "$file" "$checksum";
 		IFS=$(echo -en "\n\b")

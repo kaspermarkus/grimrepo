@@ -39,7 +39,7 @@ function clear_database {
 function create_database {
 	#create table
 	err=`sqlite3 $databasename "CREATE TABLE $tablename ( checksum TEXT, filepath TEXT, UNIQUE(filepath) );"`
-	echo sqlite3 $databasename "CREATE TABLE $tablename ( checksum TEXT, filepath TEXT, UNIQUE(filepath) );" 
+	log 0 "sqlite3 $databasename \"CREATE TABLE $tablename ( checksum TEXT, filepath TEXT, UNIQUE(filepath) );\"" 
 	#check and react if error occured
 	if [ $? != "0" ]; then 
 		echo $err;
@@ -48,7 +48,7 @@ function create_database {
 	err=`sqlite3 $databasename "CREATE INDEX checksum_index on checksums ( checksum );"`;
 	#check and react if error occured
 	if [ $? != "0" ]; then 
-		echo $err;
+		log 2 "$err";
 		exit 30;
 	fi;
 }
@@ -66,8 +66,6 @@ function do_query {
 	if [ ! -f "$databasename" ]; then 
 		 create_database;
 	fi;
-	#query=`echo "$query" | sed s/\"/\\\\\"/g`;
-	#echo	sqlite3 $databasename $query;
 	result=`sqlite3 $databasename "$query"`;
 	errorcode=$?;
 	#echo do query result: $result with errorcode $?;
@@ -92,7 +90,7 @@ function get_checksum {
 	#result=`sqlite3 $databasename "$query"`;
 	errorcode=$?;
 	if [ $errorcode != "0" ]; then 
-		echo "ERROR occured while trying to retrieve checksum from database";
+		log 2 "ERROR occured while trying to retrieve checksum from database";
 		exit 31;
 	fi;
 	echo $checksum; 
@@ -113,13 +111,13 @@ function set_checksum {
 	filepath=$1;
 	checksum=$2;
 
-echo "do_query INSERT OR REPLACE INTO $tablename ( checksum, filepath ) VALUES ( \"$checksum\", \"$filepath\" )";
+	log 0 "do_query INSERT OR REPLACE INTO $tablename ( checksum, filepath ) VALUES ( \"$checksum\", \"$filepath\" )";
 
 	res=`do_query "INSERT OR REPLACE INTO $tablename ( checksum, filepath ) VALUES ( \"$checksum\", \"$filepath\" );"`;
-	echo $res
+	log 0 "$res"
 	if [ $? != "0" ]; then 
-		echo "ERROR occured while trying to enter or update checksum to database";
-		echo "$res";
+		log 2 "ERROR occured while trying to enter or update checksum to database";
+		log 2 "$res";
 		exit 32;
 	fi; 
 }
@@ -135,11 +133,10 @@ function delete_file_entry {
 	filepath=$1;
 	res=`do_query "DELETE FROM $tablename WHERE filepath=\"$filepath\""`;
 	if [ $? != "0" ]; then 
-		echo "ERROR occured while trying to delete entry from database";
-		echo "$res";
+		log 2 "ERROR occured while trying to delete entry from database";
+		log 2 "$res";
 		exit 33;
 	fi;
-	#echo do_query "DELETE FROM $tablename WHERE filepath=\"$filepath\" AND local_root=\"$local_root\";";
 }
 
 ####
@@ -154,9 +151,8 @@ function delete_dir_entry {
 	filepath=$1;
 	res=`do_query "DELETE FROM $tablename WHERE filepath LIKE \"${filepath}%\""`;
 	if [ $? != "0" ]; then 
-		echo "ERROR occured while trying to delete entry from database";
-		echo "$res";
+		log 2 "ERROR occured while trying to delete entry from database";
+		log 2 "$res";
 		exit 33;
 	fi;
-	#echo do_query "DELETE FROM $tablename WHERE filepath=\"$filepath\" AND local_root=\"$local_root\";";
 }
