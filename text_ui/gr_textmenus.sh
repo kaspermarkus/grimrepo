@@ -30,11 +30,21 @@ function menu_header {
 #
 # return - the selected number
 function query_untill {
-	read -s -n1 choice;
-	#continue to query untill user inputs one of the letters in the param
-	while [[ "$choice" =~ [^$1] ]]; do
+	#allow preprogrammed input sequence
+	echo SELECTIONS $preprogrammed 1>&2
+	#this is done by passing a parameter to gr_solve resulting in $preprogrammed
+	if [[ $preprogrammed != "" ]]; then
+		#take first choice from preprogrammed
+		choice=${preprogrammed:0:1}
+		preprogrammed=${preprogrammed:1}
+	else
 		read -s -n1 choice;
-	done; 
+		#continue to query untill user inputs one of the letters in the param
+		while [[ "$choice" =~ [^$1] ]]; do
+			read -s -n1 choice;
+		done; 
+	fi;
+
 	return $choice;	
 }
 

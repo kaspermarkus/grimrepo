@@ -18,8 +18,30 @@ else
 fi
 	    
 source "$GR_PATH/text_ui/gr_solvefunctions.sh";
-#source "${text_ui_base}gr_solvefunctions.sh";
 source "$GR_PATH/text_ui/gr_constants.sh";
+
+while getopts ":hp:" opt; do
+        case $opt in
+                p)
+                echo "-p was triggered, Parameter: $OPTARG" >&2
+                preprogrammed=$OPTARG;
+                ;;
+                \?)
+                echo "Invalid option: -$OPTARG" >&2
+                exit 1
+                ;;
+                :)
+                echo "Option -$OPTARG requires an argument." >&2
+                exit 1
+                ;;
+                h)
+                echo "$0  [-p preprogram]"
+                echo "where preprogram is a list of user choices preprogrammed... can be used for batching (eg. "120") for simulating a 1, 2, 0 user selection"
+                exit 0
+        esac
+done
+
+
 
 ####
 # solves a conflict
@@ -27,7 +49,7 @@ source "$GR_PATH/text_ui/gr_constants.sh";
 # $1 - The string presented in the header
 function solve_all {
 	#sync, and get the newest conflict:
-	local conflict=`bash $GR_PATH/text_ui/gr_autosync.sh`;
+	local conflict=`bash $GR_PATH/repo_sync.sh`;
 	echo textui/gr_solve.sh/solve_all recieved conflict: $conflict 1>&2;
 	solve_conflict "$conflict";
 	local returned=$?;
@@ -36,7 +58,7 @@ function solve_all {
 	#	conflict=`${text_ui_base}gr_autosync.sh`;
 		#if a conflict exists, solve it:
 	#	if [[ $conflict != "" ]]; then
-	repo_sync.sh -s "$conflict\n${ACTIONS[$returned]}\n"; 
+	$GR_PATH/repo_sync.sh -s "$conflict\n${ACTIONS[$returned]}\n"; 
 			#echo `solve_conflict "$conflict"`;
 	#	fi;
 	#done;
@@ -83,3 +105,4 @@ function solve_conflict {
 	return $returned;
 }
 
+solve_all
