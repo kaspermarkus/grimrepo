@@ -20,24 +20,22 @@
 set -o nounset                              # Treat unset variables as an error
 
 #number of tests
-let TESTS=0;
-#number of good tests
-let SUCCESS=0
+
 
 function assert_equal {
-	echo "####" $3
-	let TESTS=TESTS+1
+	resultstr="%-50s  :   %s\n";
+	inc_tests
 	if [[ ! "$1" == "$2" ]]; then
-		echo 'fail';
-		return 1;
-	else
-		echo "success"
-		let SUCCESS=SUCCESS+1
+		state=`echo -e "\E[31;40mfail: $1  expected: $2 \033[0m" `;
+		printf "$resultstr" $3 $state
 		return 0;
+	else
+		#33 for yellow
+		state=`echo -e "\E[32;40msuccess\033[0m"`;
+		printf  "$resultstr" $3 $state
+		let SUCCESS=SUCCESS+1
+		return 1;
 	fi
+
 }
 
-function print_stat {
- echo "total number of tests:    ${TESTS}"
- echo "total number of success:  ${SUCCESS}"
-}
