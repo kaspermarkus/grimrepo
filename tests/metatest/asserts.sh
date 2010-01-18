@@ -20,12 +20,21 @@ set -o nounset                              # Treat unset variables as an error
 
 function test_1() {
 	out="1"
-	assert_equal $out "1" "Testing simple string"
+	assert_equal "$out" "1" "Testing simple string"
 }
 
 function test_2() {
-   out="fail"
-   assert_equal $out "1" "Testing erroneous function"
+   out="single string"
+   assert_equal "$out" "1" "Testing erroneous function"
 }
+
+function test_3() {
+   out="1multi
+2line
+3error"
+
+   assert_equal "$out" "1" "Testing erroneous function"
+}
+
 
 

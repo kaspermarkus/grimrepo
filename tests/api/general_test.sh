@@ -1,5 +1,5 @@
 #!/bin/bash - 
-#===============================================================================
+===============================================================================
 #
 #          FILE:  general_test.sh
 # 
@@ -16,16 +16,22 @@
 #       CREATED: 01/17/2010 05:52:29 PM UTC
 #      REVISION:  ---
 #===============================================================================
+if [ -f ~/.grimreporc ]; then
+	source ~/.grimreporc
+else
+	source `pwd`/.grimreporc
+fi
+
 
 set -o nounset                              # Treat unset variables as an error
 
-function 1test_1() {
+function 1test_nochanges() {
 out=`./repo_sync.sh 2> /dev/null`
 assert_equal $out "" "Testing default dont have changes"
 }
 
 
-function 1test_2() {
+function 1test_both_files_modified() {
 echo "xxx" > ${GR_LOCALROOT}A/a1
 echo "bbb" > ${GR_SERVERROOT}A/a1
 

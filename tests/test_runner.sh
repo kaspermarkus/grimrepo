@@ -14,7 +14,7 @@
 #       CREATED: 01/17/2010 05:38:14 PM UTC
 #      REVISION:  ---
 #===============================================================================
-
+START=$(date +%s)
 set -o nounset  # Treat unset variables as an error
 
 #source all files with test_* functions in them
@@ -47,7 +47,6 @@ echo "total tests :" $?
 echo "successes   :" $SUCCESS 
 }
 
-
 function find_files {
 	local IFS="
 	"
@@ -69,4 +68,6 @@ function find_files {
 #print statistics
 find_files
 print_stat
-
+END=$(date +%s)
+DIFF=$(( $END - $START ))
+echo "$DIFF seconds"
