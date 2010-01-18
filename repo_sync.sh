@@ -97,6 +97,7 @@ fi
 
 #return conflict parameteres to the caller
 function get_conflict_state {
+	log 0 "repo_sync returning conflict state: $returnconflict"
 	echo -e $returnconflict
 }
 
@@ -421,8 +422,8 @@ while [ `echo $server_conflicts | wc -w` != 0 ]; do
 						;;
 						DELETE_SERVER)
 						if [ $chksum_s == $solution_chksumserver ]; then
-							log 1 "deleting server dir: $GR_SERVERROOT$conflict";
-							delete_data $conflict $GR_SERVERROOT;
+							log 1 "deleting server dir: $GR_SERVER:$GR_SERVERROOT$conflict";
+							delete_data $conflict $GR_SERVER:$GR_SERVERROOT;
 						else
 							log 2 "chksum mismatch for solution";
 							exit 1
@@ -451,7 +452,7 @@ while [ `echo $server_conflicts | wc -w` != 0 ]; do
 					esac
 
 				else #solution_conflict_type not set, eg. user has not set an action for conflict
-					set_conflict_state  "$conflict\nDIR_DELETED_SERVER_CHANGED_LOCAL\n$chksum_c\n$chksum_s";
+					set_conflict_state  "$conflict\nDIR_DELETED_LOCAL_CHANGED_SERVER\n$chksum_c\n$chksum_s";
 					#give user the choice between copying or delete
 				fi
 			else

@@ -56,8 +56,8 @@ function delete_data {
 		#and then get the login/server part for the ssh statement
 		serverinfo=`echo "$root" | sed "s#:$serverroot\\\$##"`
 		#now delete stuff from server via ssh:
-		echo ssh $serverinfo "rm -rf \"$serverroot$file\"";
-		ssh $serverinfo "rm -rf \"$serverroot$file\"";
+		log 1 "ssh $serverinfo \"rm -rf '$serverroot$file'\"";
+		eval ssh $serverinfo "rm -rf \"$serverroot$file\"";
 	else 
 		rm -rf "$root$file";
 	fi;
