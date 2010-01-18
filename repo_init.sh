@@ -34,11 +34,11 @@ sql_wrapper_rm_flag="-i";
 while getopts ":hd" opt; do
 	case $opt in
 		d)
-		echo "-d was triggered" >&2
+		log 1 "-d was triggered"
 		sql_wrapper_rm_flag=""
 		;;
 		\?)
-		echo "Invalid option: -$OPTARG" >&2
+		log 1 "Invalid option: -$OPTARG"
 		exit 1
 		;;
 		h)
@@ -66,7 +66,7 @@ function file_exists_server {
 	file=$1;
 	serverroot=$2;
 	localroot=$3;
-	echo localroot $localroot;
+	log 0 "localroot $localroot";
 	#present conflict to user (choice saved in $?)
 	file_exists_server_menu "$file"
 	choice=$?;
@@ -241,7 +241,7 @@ alt_conflict_list=$c_to_s;
 conflict_list=$s_to_c;
 
 while [ `echo $conflict_list | wc -w` != 0 ]; do
-	tree *root;
+	log 0 "`tree *root`";
 	echo "Conflict List: $conflict_list"; 
 	#take first line from list of conflicts:
 	conflict=`echo "$conflict_list" | head -n 1`
@@ -278,7 +278,7 @@ done;
 #echo "=====================================================================================";
 #then consider the files that are conflicting from local to server (s_to_c):
 while [ `echo $alt_conflict_list | wc -w` != 0 ]; do
-	tree *root;
+	log 0 "`tree *root`";
 	echo "Conflict List: $alt_conflict_list"; 
 	#take first line from list of conflicts:
 	conflict=`echo "$alt_conflict_list" | head -n 1`
@@ -305,5 +305,5 @@ done;
 
 #After all conflicts are solved, we clear the database,
 recalculate_all "$GR_LOCALROOT";
-tree $GR_LOCALROOT $GR_SERVERROOT
+#tree $GR_LOCALROOT $GR_SERVERROOT
 #echo $GR_LOCALROOT

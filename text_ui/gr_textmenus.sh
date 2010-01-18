@@ -31,7 +31,7 @@ function menu_header {
 # return - the selected number
 function query_untill {
 	#allow preprogrammed input sequence
-	echo SELECTIONS $preprogrammed 1>&2
+	log 1 "SELECTIONS $preprogrammed"
 	#this is done by passing a parameter to gr_solve resulting in $preprogrammed
 	if [[ $preprogrammed != "" ]]; then
 		#take first choice from preprogrammed

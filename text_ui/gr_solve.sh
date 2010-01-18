@@ -19,24 +19,25 @@ fi
 	    
 source "$GR_PATH/text_ui/gr_solvefunctions.sh";
 source "$GR_PATH/text_ui/gr_constants.sh";
+source "$GR_PATH/repo_log.sh";
 
 while getopts ":hp:" opt; do
         case $opt in
                 p)
-                echo "-p was triggered, Parameter: $OPTARG" >&2
+                log 1 "-p was triggered, Parameter: $OPTARG" 
                 preprogrammed=$OPTARG;
                 ;;
                 \?)
-                echo "Invalid option: -$OPTARG" >&2
+                log 2 "Invalid option: -$OPTARG" 
                 exit 1
                 ;;
                 :)
-                echo "Option -$OPTARG requires an argument." >&2
+                echo "Option -$OPTARG requires an argument."
                 exit 1
                 ;;
                 h)
                 echo "$0  [-p preprogram]"
-                echo "where preprogram is a list of user choices preprogrammed... can be used for batching (eg. "120") for simulating a 1, 2, 0 user selection"
+                echo "where preprogram is a list of user choices preprogrammed... can be used for batching (eg. \"120\") for simulating a 1, 2, 0 user selection"
                 exit 0
         esac
 done
@@ -50,7 +51,7 @@ done
 function solve_all {
 	#sync, and get the newest conflict:
 	local conflict=`bash $GR_PATH/repo_sync.sh`;
-	echo textui/gr_solve.sh/solve_all recieved conflict: $conflict 1>&2;
+	log 0 "textui/gr_solve.sh/solve_all recieved conflict: $conflict"
 	solve_conflict "$conflict";
 	local returned=$?;
 	#while [[ $conflict != "" ]]; do
@@ -79,7 +80,7 @@ function solve_conflict {
 	local md5local=`printf "$conflictstring" | head -n 3 | tail -n 1`
 	local md5server=`printf "$conflictstring" | head -n 4 | tail -n 1`
 	local returned;
-	echo "solve_conflict recieved package: $filename $conflict_type $md5local $md5server" 1>&2;
+	log 0 "solve_conflict recieved package: $filename $conflict_type $md5local $md5server";
 	
 	#figure out what conflict it is, and send it to the correct location
 	if [[ $conflict_type == "DIR_DELETED_SERVER_CHANGED_LOCAL" ]]; then
