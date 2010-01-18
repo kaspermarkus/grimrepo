@@ -10,8 +10,8 @@
 # and sql_wrapper.
 ####################################################
 
-source sql_wrapper.sh
-source checksum_wrapper.sh
+source $GR_PATH/sql_wrapper.sh
+source $GR_PATH/checksum_wrapper.sh
 
 ####
 # file_exists

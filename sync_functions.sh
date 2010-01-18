@@ -11,8 +11,8 @@
 #
 ####################################################
 
-source general_functions.sh
-source file_info.sh
+source $GR_PATH/general_functions.sh
+source $GR_PATH/file_info.sh
 
 ####
 # This function is to be used when a file or directory

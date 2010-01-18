@@ -36,6 +36,5 @@ function assert_equal {
 		let SUCCESS=SUCCESS+1
 		return 1;
 	fi
-
 }
 

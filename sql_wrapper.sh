@@ -18,7 +18,7 @@
 # +-----------------+-------------------+
 ####################################################
 
-databasename="grim_repo.sqlite";
+databasename="$GR_PATH/grim_repo.sqlite";
 tablename="checksums";
 
 ####
@@ -63,7 +63,7 @@ function do_query {
 	query=$1;
 	#echo "QUERY $query" DONE;
 	#check that database exists, else create:
-	if [ ! -f "grim_repo.sqlite" ]; then 
+	if [ ! -f "$databasename" ]; then 
 		 create_database;
 	fi;
 	#query=`echo "$query" | sed s/\"/\\\\\"/g`;
