@@ -23,7 +23,7 @@ set -o nounset                              # Treat unset variables as an error
 
 
 function assert_equal {
-	resultstr="%-50s  :   %s\n";
+	resultstr="%-80s  :   %s\n";
 	inc_tests
 	if [[ ! "$1" == "$2" ]]; then
 		state=`echo -e "\E[31;40mfail: $1  expected: $2 \033[0m" `;

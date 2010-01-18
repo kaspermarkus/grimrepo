@@ -16,7 +16,6 @@
 #       CREATED: 01/17/2010 05:25:14 PM UTC
 #      REVISION:  ---
 #===============================================================================
-. unittester.sh
 set -o nounset                              # Treat unset variables as an error
 
 function test_1() {
@@ -24,5 +23,9 @@ function test_1() {
 	assert_equal $out "1" "Testing simple string"
 }
 
+function test_2() {
+   out="fail"
+   assert_equal $out "1" "Testing erroneous function"
+}
 
 

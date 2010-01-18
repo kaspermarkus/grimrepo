@@ -22,7 +22,7 @@ set -o nounset  # Treat unset variables as an error
 
 
 #take one file as parameter ?
-
+source ../repo_log.sh
 source unittester.sh
 
 
@@ -59,7 +59,8 @@ function find_files {
 		for line in ${b[*]}
 		do
 			source $file
-    		testfunction=`expr match "$line" 'function \([a-z]*\_[a-zA-Z0-9\_]\)'`
+    		testfunction=`expr match "$line" 'function \([a-z]*\_[a-zA-Z0-9\_]*\)'`
+		    log 0 "running $testfunction@$file"
 			$testfunction
 		done
 	done
