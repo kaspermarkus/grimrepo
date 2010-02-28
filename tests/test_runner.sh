@@ -1,4 +1,4 @@
-#!/bin/bash - 
+#!/bin/bash  
 #===============================================================================
 #
 #          FILE:  test_runner.sh
@@ -17,6 +17,8 @@
 START=$(date +%s)
 set -o nounset  # Treat unset variables as an error
 
+#set default verbosity level:
+let GR_VERBOSITY_LEVEL=2
 #source all files with test_* functions in them
 #error if name not uniqe
 

@@ -8,7 +8,11 @@ PRETEXT[$VERBOSE]="mm: ";
 PRETEXT[$WARNINGS]="ww: ";
 PRETEXT[$ERRORS]="EE: ";
 
-let GR_VERBOSITY_LEVEL=2
+#If verbosity level GR_VERBOSITY_LEVEL is not set, default it to errors only
+if [ -z ${GR_VERBOSITY_LEVEL} ] ; then
+	let GR_VERBOSITY_LEVEL=2
+fi;
+
 
 # $1 - seriousness (0 - all, 1 - warnings, 2 - errors)
 # $2 - log string

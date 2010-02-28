@@ -10,22 +10,30 @@
 #
 ####################################################
 
-source $GR_PATH/sync_functions.sh
-source $GR_PATH/repo_bookkeeper.sh
-source $GR_PATH/sql_wrapper.sh
-source $GR_PATH/repo_log.sh
-
 if [ -f ~/.grimreporc ]; then
 	source ~/.grimreporc
 else
 	source `pwd`/.grimreporc
 fi
 
-while getopts ":hs:" opt; do
+source $GR_PATH/sync_functions.sh
+source $GR_PATH/repo_bookkeeper.sh
+source $GR_PATH/sql_wrapper.sh
+source $GR_PATH/repo_log.sh
+
+while getopts ":hsd:" opt; do
 	case $opt in
 		s)
 		log 1 "-s was triggered, Parameter: $OPTARG"
 		conflictsolution=$OPTARG;
+		;;
+		d)
+		#-d <verbosity level> was triggered. Valid values:
+		#0-verbose, 1-warnings/errors only, 2-errors only
+		log 1 "-d was triggered, Parameter: $OPTARG";
+		if [[ "$OPTARG" < 0 ]]; then log 2 "Invalid verbosity level -- valid levels: 0,1,2"; exit 1; fi;
+		if [[ "$OPTARG" > 2 ]]; then log 2 "Invalid verbosity level -- valid levels: 0,1,2"; exit 1; fi;
+		GR_VERBOSITY_LEVEL=$OPTARG;
 		;;
 		\?)
 		log 2 "Invalid option: -$OPTARG" >&2
